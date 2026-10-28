@@ -90,6 +90,54 @@ main{padding-top:20px}
 @media(max-width:900px){.hero{grid-template-columns:200px minmax(0,1fr)}.hero-banner{padding:30px}.hero-art{font-size:95px;right:3%}.products{gap:10px}.product-img{height:155px}.shop-category-art{height:112px}}
 @media(max-width:650px){.headmain{padding:11px 0;gap:8px}.logo{font-size:25px}.head-actions{gap:3px}.iconbtn{padding:6px 7px}.searchbox button{min-width:80px;padding:0 12px}.nav .wrap{gap:20px}.nav button{padding:10px 0}.hero-banner{min-height:245px;padding:23px 20px}.hero h1{font-size:29px;max-width:275px}.hero p{font-size:13px;max-width:250px;line-height:1.65}.hero-art{font-size:70px;right:3%;bottom:22px}.benefits{gap:8px}.benefit{padding:11px 9px}.benefit .emoji{font-size:22px}.benefit strong{font-size:12px}.benefit small{font-size:10px}.sectionhead h2,.flash h2{font-size:19px}.shop-category-art{height:96px;font-size:43px}.shop-category{padding:10px}.shop-category strong{font-size:14px}.shop-assurance{padding:13px}.deal-strip{padding:18px}.product-img{height:145px}.products{gap:8px}.product-info{padding:9px}}
 @media(min-width:1200px){.wrap{width:min(1280px,calc(100% - 48px))}}
+
+/* Refined Pickaboo-inspired catalogue layout (original HubinBD styling) */
+:root{--orange:#f85606;--orange2:#ff6a1a;--ink:#242424;--muted:#777;--line:#e9e9e9;--bg:#f5f5f5;--green:#159957;--shadow:0 2px 12px #00000008}
+body{background:#f5f5f5}
+.topline{font-size:12px;background:#f3f3f3}
+.headmain{padding:14px 0;gap:22px}
+.logo{font-size:31px}
+.searchbox{border:1px solid #ddd;background:#fff;border-radius:5px;box-shadow:none}
+.searchbox:focus-within{border-color:var(--orange);box-shadow:0 0 0 3px #f8560610}
+.searchbox button{min-width:94px}
+.nav{border-top:1px solid #eee;border-bottom:1px solid #eaeaea}
+.nav .wrap{gap:27px}
+.nav button{font-size:14px;padding:11px 0}
+main{padding-top:14px}
+.deal-strip{margin:16px 0 20px;padding:19px 24px;border-radius:6px;background:linear-gradient(105deg,#252525,#393939);border-left:4px solid var(--orange)}
+.deal-intro strong{font-size:clamp(18px,2vw,24px)}
+.deal-action{border-radius:4px}
+.section{margin-top:23px}
+.sectionhead{margin-bottom:13px}
+.sectionhead h2{font-size:21px}
+.shop-category-grid{gap:12px}
+.shop-category{border:1px solid #e8e8e8;border-radius:6px;background:#fff;padding:10px;transition:border-color .16s,box-shadow .16s}
+.shop-category:hover{border-color:#ffc5a8;box-shadow:0 5px 16px #0000000b}
+.shop-category-art{height:120px;border-radius:4px}
+.shop-category-link{color:var(--orange)}
+.shop-assurance{border:1px solid #ededed;border-radius:6px}
+.flash{border-radius:5px;border:0;border-left:4px solid var(--orange);background:#fff;padding:13px 16px}
+.flash h2{font-size:21px}
+.filterchips{gap:8px}
+.chip{border-radius:4px;background:#fff}
+.chip.active{background:#fff0e8;border-color:#ffc5a8;color:var(--orange)}
+.toolbar{padding:12px 0;border-bottom:1px solid #e7e7e7}
+.products{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.product{border:1px solid #e8e8e8;border-radius:5px;box-shadow:none;transition:border-color .16s,box-shadow .16s}
+.product:hover{transform:translateY(-2px);border-color:#ffc5a8;box-shadow:0 6px 17px #0000000b}
+.product-img{height:185px;background:#fff}
+.product-img img{object-fit:contain;padding:8px}
+.product-info{padding:12px}
+.product-name{height:42px;font-size:14px}
+.price{font-size:17px}
+.badge{border-radius:2px}
+.add{border-radius:4px}
+.footer{margin-top:30px}
+@media(min-width:1200px){.wrap{width:min(1320px,calc(100% - 48px))}}
+@media(max-width:1000px){.products{grid-template-columns:repeat(4,minmax(0,1fr))}.shop-category-art{height:105px}.headmain{gap:12px}.logo{font-size:27px}}
+@media(max-width:760px){.headmain{flex-wrap:wrap;padding:10px 0;gap:8px}.logo{font-size:26px}.searchbox{order:3;flex-basis:100%;height:42px}.head-actions{margin-left:auto}.iconbtn{font-size:12px;padding:6px}.nav .wrap{gap:20px}.nav button{font-size:13px}.deal-strip{padding:15px;gap:10px}.deal-decoration{display:none}.deal-intro{max-width:100%}.shop-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.shop-category-art{height:100px}.shop-assurance{grid-template-columns:1fr}.products{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.product-img{height:155px}.product-info{padding:9px}.product-name{font-size:13px}.price{font-size:15px}.sectionhead h2,.flash h2{font-size:18px}.toolbar{gap:8px}}
+@media(max-width:380px){.head-actions .iconbtn{font-size:11px;padding:5px}.product-img{height:130px}.shop-category-art{height:85px}}
+
 </style>
 </head>
 <body>
