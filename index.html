@@ -69,7 +69,7 @@ const $=id=>document.getElementById(id);
 function save(){try{localStorage.setItem('hubinbd_cart',JSON.stringify(cart));localStorage.setItem('hubinbd_wishlist',JSON.stringify(wish))}catch(e){}}
 function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').classList.remove('show'),2300)}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function img(p){return '<img loading="lazy" src="'+esc(p.img)+'" alt="'+esc(p.name)+'" onerror="this.style.display=\'none\';this.parentNode.classList.add(\'fallback\');this.parentNode.insertAdjacentHTML(\'beforeend\',\'<span style=&quot;font-size:58px&quot;>'+p.emoji+'</span>\')">'}
+function img(p){return '<img loading="lazy" src="'+esc(p.img)+'" alt="'+esc(p.name)+'">'}
 function countCart(){return Object.values(cart).reduce((a,b)=>a+Number(b||0),0)}
 function updateCounts(){$('cartCount').textContent=countCart();$('wishCount').textContent=wish.length;$('mobileCartCount').textContent=countCart();$('mobileWishCount').textContent=wish.length}
 function setCategory(c){category=c;onlyWish=false;document.querySelectorAll('[data-cat]').forEach(b=>b.classList.toggle('active',b.dataset.cat===c));renderProducts();window.scrollTo({top:$('productGrid').getBoundingClientRect().top+scrollY-135,behavior:'smooth'})}
