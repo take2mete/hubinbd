@@ -27,6 +27,26 @@ Error generating stack: `+u.message+`
         [class~="text-[#667085]"],[class~="text-[#98A2B3]"],[class~="text-[#9CA3AF]"],[class~="text-[#A1A1AA]"],[class~="text-[var(--text-muted)]"],[class~="text-[var(--text-faint)]"],[class~="text-slate-400"],[class~="text-slate-500"],[class~="text-gray-400"],[class~="text-gray-500"]{color:#273449!important}
         input,textarea,select{color:#111827!important}
         input::placeholder,textarea::placeholder{color:#526176!important;opacity:1}
+        /* Ensure white utility text stays readable on light surfaces */
+        .bg-white.text-white,.bg-white .text-white,
+        .bg-white\\/95.text-white,.bg-white\\/95 .text-white,
+        .bg-white\\/90.text-white,.bg-white\\/90 .text-white,
+        .bg-white\\/80.text-white,.bg-white\\/80 .text-white,
+        .bg-\\[\\#F9FAFB\\].text-white,.bg-\\[\\#F9FAFB\\] .text-white,
+        .bg-\\[\\#FAFAFA\\].text-white,.bg-\\[\\#FAFAFA\\] .text-white,
+        .bg-\\[\\#F8FAFF\\].text-white,.bg-\\[\\#F8FAFF\\] .text-white,
+        .bg-\\[\\#F1F5F9\\].text-white,.bg-\\[\\#F1F5F9\\] .text-white,
+        .bg-\\[\\#FFF7F0\\].text-white,.bg-\\[\\#FFF7F0\\] .text-white,
+        .bg-\\[\\#FFF1E7\\].text-white,.bg-\\[\\#FFF1E7\\] .text-white,
+        .bg-\\[\\#FFFBEB\\].text-white,.bg-\\[\\#FFFBEB\\] .text-white,
+        .bg-\\[\\#EFF6FF\\].text-white,.bg-\\[\\#EFF6FF\\] .text-white,
+        .bg-\\[\\#E6F6EE\\].text-white,.bg-\\[\\#E6F6EE\\] .text-white,
+        .bg-\\[\\#DCFCE7\\].text-white,.bg-\\[\\#DCFCE7\\] .text-white,
+        .bg-\\[\\#FDF2F8\\].text-white,.bg-\\[\\#FDF2F8\\] .text-white,
+        .bg-\\[\\#FEE2E2\\].text-white,.bg-\\[\\#FEE2E2\\] .text-white{
+          color:#111827!important
+        }
+
       
       `})]})}Rc.createRoot(document.getElementById("root")).render(s(Oc.default.StrictMode,{children:s(Hi,{})}));
 </script>
