@@ -27,6 +27,10 @@ Error generating stack: `+u.message+`
         [class~="text-[#667085]"],[class~="text-[#98A2B3]"],[class~="text-[#9CA3AF]"],[class~="text-[#A1A1AA]"],[class~="text-[var(--text-muted)]"],[class~="text-[var(--text-faint)]"],[class~="text-slate-400"],[class~="text-slate-500"],[class~="text-gray-400"],[class~="text-gray-500"]{color:#273449!important}
         input,textarea,select{color:#111827!important}
         input::placeholder,textarea::placeholder{color:#526176!important;opacity:1}
+        /* Keep muted text readable on dark/black surfaces too */
+        :is([class*="bg-[#000"],[class*="bg-[#0"],[class*="bg-[#1"],[class*="bg-black"]) :is([class~="text-[#667085]"],[class~="text-[#98A2B3]"],[class~="text-[#9CA3AF]"],[class~="text-[#A1A1AA]"],[class~="text-[var(--text-muted)]"],[class~="text-[var(--text-faint)]"],[class~="text-slate-400"],[class~="text-slate-500"],[class~="text-gray-400"],[class~="text-gray-500"]){
+          color:#F8FAFC!important
+        }
         /* Ensure white utility text stays readable on light surfaces */
         .bg-white.text-white,.bg-white .text-white,
         .bg-white\\/95.text-white,.bg-white\\/95 .text-white,
