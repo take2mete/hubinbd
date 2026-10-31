@@ -1,24 +1,27 @@
 {
-  "name": "hubinbd-next",
-  "version": "1.0.0",
+  "name": "hubinbd",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "next": "15.5.28",
-    "react": "19.1.10",
-    "react-dom": "19.1.10"
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.8",
     "@types/node": "^22.15.30",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.7",
     "eslint": "^9.28.0",
     "eslint-config-next": "15.5.28",
+    "tailwindcss": "^4.1.8",
     "typescript": "^5.8.3"
   }
 }
