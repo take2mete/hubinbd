@@ -144,23 +144,6 @@ export default function SiteHeader() {
         </nav>
       )}
 
-      <nav aria-label="দ্রুত টুলস নেভিগেশন" className="border-t border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-[1280px] items-center gap-2 overflow-x-auto px-3 py-2.5 sm:px-4">
-          {[
-            { href: "/pdf-tools", label: "PDF Tools", icon: "📄" },
-            { href: "/qr-maker", label: "QR Maker", icon: "▦" },
-            { href: "/graphics", label: "Graphics", icon: "🎨" },
-            { href: "/image-tools", label: "Image Tools", icon: "🖼️" },
-            { href: "/hisab-khata", label: "Hisab Khata", icon: "📒" },
-            { href: "/data-maker", label: "Data Maker", icon: "📊" },
-          ].map((item) => (
-            <Link key={item.href} href={item.href} className="flex shrink-0 items-center gap-2 rounded-xl border border-zinc-200 bg-[#fafafa] px-3.5 py-2 text-[12px] font-semibold text-zinc-700 transition hover:border-[#ff6b00]/40 hover:bg-orange-50 hover:text-[#e65f00] sm:text-[13px]">
-              <span aria-hidden="true" className="text-base">{item.icon}</span>
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      </nav>
     </header>
   );
 }
