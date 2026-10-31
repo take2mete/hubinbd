@@ -7,23 +7,23 @@ const categories = [
   { id: "mens", label: "ছেলেদের জামা", icon: "👕" },
   { id: "womens", label: "মেয়েদের জামা", icon: "👗" },
   { id: "winter", label: "শীতের জামা", icon: "❄" },
-  { id: "tools", label: "টুলস", icon: "🛠" },
-  { id: "computer-work", label: "কম্পিউটার ওয়ার্ক", icon: "💻" },
+  { id: "tools", label: "টুলস", icon: "🛠", href: "/tools" },
+  { id: "computer-work", label: "কম্পিউটার ওয়ার্ক", icon: "💻", href: "/computer-work" },
 ];
 
 const tools = [
-  ["▧", "Image Tools", "ছবি এডিট ও কনভার্ট", "/tools/image"],
-  ["▤", "PDF Tools", "PDF ফাইল নিয়ে কাজ", "/tools/pdf"],
-  ["▦", "QR Maker", "QR কোড তৈরি", "/tools/qr"],
-  ["▥", "Hisab Khata", "হিসাব রাখুন সহজে", "/tools/hisab-khata"],
+  ["▧", "Image Tools", "ছবি এডিট ও কনভার্ট", "/tools"],
+  ["▤", "PDF Tools", "PDF ফাইল নিয়ে কাজ", "/tools"],
+  ["▦", "QR Maker", "QR কোড তৈরি", "/tools"],
+  ["▥", "Hisab Khata", "হিসাব রাখুন সহজে", "/tools"],
 ];
 const computer = [
-  ["▣", "Windows Install & Setup", "উইন্ডোজ ইনস্টল ও সেটআপ", "/computer-work/windows"],
-  ["⌨", "Typing & Documentation", "বাংলা ও ইংরেজি টাইপিং", "/computer-work/typing"],
-  ["▤", "Office Work", "MS Word, Excel, PowerPoint", "/computer-work/office"],
-  ["▧", "Data Maker", "ডাটা তৈরি ও সাজানো", "/computer-work/data-maker"],
-  ["✎", "Graphics", "পোস্টার, ব্যানার ও ডিজাইন", "/computer-work/graphics"],
-  ["◎", "Online Application", "অনলাইন আবেদন সহায়তা", "/computer-work/application"],
+  ["▣", "Windows Install & Setup", "উইন্ডোজ ইনস্টল ও সেটআপ", "/computer-work"],
+  ["⌨", "Typing & Documentation", "বাংলা ও ইংরেজি টাইপিং", "/computer-work"],
+  ["▤", "Office Work", "MS Word, Excel, PowerPoint", "/computer-work"],
+  ["▧", "Data Maker", "ডাটা তৈরি ও সাজানো", "/computer-work"],
+  ["✎", "Graphics", "পোস্টার, ব্যানার ও ডিজাইন", "/computer-work"],
+  ["◎", "Online Application", "অনলাইন আবেদন সহায়তা", "/computer-work"],
 ];
 const products = [
   { name: "Galaxy S24 Ultra 5G", category: "electronics", price: "৳১,১৮,৯৯০", old: "৳১,৩৬,০০০", discount: "১২%", tag: "Best Seller", rating: "4.8", sold: "2.1k sold", art: "phone" },
@@ -60,8 +60,8 @@ export default function Storefront() {
       <div className="quick-tools">{[...tools.slice(1,3), tools[0], tools[3], computer[3]].map((item) => <a href={item[3]} key={item[1]}><span>{item[0]}</span>{item[1]}</a>)}</div>
     </div>
 
-    <div className="category-tiles">{categories.slice(0, 5).map((item) => <button className={category === item.id ? "category-tile active" : "category-tile"} key={item.id} onClick={() => setCategory(item.id)}><span>{item.icon}</span><b>{item.label}</b></button>)}</div>
-    <nav className="category-pills" aria-label="ক্যাটাগরি">{categories.map((item) => <button key={item.id} className={category === item.id ? "selected" : ""} onClick={() => setCategory(item.id)}>{item.label}</button>)}</nav>
+    <div className="category-tiles">{categories.filter((item) => item.id !== "all").map((item) => item.href ? <a className="category-tile" href={item.href} key={item.id}><span>{item.icon}</span><b>{item.label}</b></a> : <button className={category === item.id ? "category-tile active" : "category-tile"} key={item.id} onClick={() => setCategory(item.id)}><span>{item.icon}</span><b>{item.label}</b></button>)}</div>
+    <nav className="category-pills" aria-label="ক্যাটাগরি">{categories.map((item) => item.href ? <a key={item.id} className="category-pill-link" href={item.href}>{item.label}</a> : <button key={item.id} className={category === item.id ? "selected" : ""} onClick={() => setCategory(item.id)}>{item.label}</button>)}</nav>
 
     <section className="service-panel" id="tools">
       <SectionTitle sub="ইমেজ কনভার্ট, PDF টুলস, QR কোড জেনারেট ও অনলাইন কাজের সুবিধা">অনলাইন টুলস পেজ</SectionTitle>
