@@ -1,6 +1,6 @@
 import SiteHeader from "@/components/site-header";
 import ToolCard from "@/components/tool-card";
-import SevenBanners from "@/components/SevenBanners";
+import SevenBanners from "@/components/SevenBanners.tsx";
 import SevenBanners from "@/components/SevenBanners";
 import { tools } from "@/lib/tools";
 
