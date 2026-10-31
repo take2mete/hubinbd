@@ -7,7 +7,7 @@ const categories = [
   { value: "all", label: "সব ক্যাটাগরি" },
   { value: "mens", label: "ছেলেদের জামা" },
   { value: "womens", label: "মেয়েদের জামা" },
-  { value: "winter", label: "শীতের জামা" },
+  { value: "kids", label: "বাচ্চাদের জামা" },
   { value: "tools", label: "টুলস ও যন্ত্রপাতি" },
   { value: "computer-work", label: "কম্পিউটার ওয়ার্ক" },
   { value: "car-parts", label: "গাড়ির যন্ত্রাংশ" },
@@ -17,7 +17,7 @@ const navLinks = [
   { href: "/", label: "হোম" },
   { href: "/?category=mens", label: "ছেলেদের জামা" },
   { href: "/?category=womens", label: "মেয়েদের জামা" },
-  { href: "/?category=winter", label: "শীতের জামা" },
+  { href: "/?category=kids", label: "বাচ্চাদের জামা" },
   { href: "/tools", label: "টুলস" },
   { href: "/computer-work", label: "কম্পিউটার ওয়ার্ক" },
 ];
