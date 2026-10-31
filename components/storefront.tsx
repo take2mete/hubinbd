@@ -46,6 +46,7 @@ export default function Storefront() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [cart, setCart] = useState(0);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [rentBannerFailed, setRentBannerFailed] = useState(false);
   const visibleProducts = useMemo(() => products.filter((p) => {
     const matchCategory = category === "all" || category === "tools" || category === "computer-work" || p.category === category || (category === "winter" && p.category === "mens");
     return matchCategory && p.name.toLowerCase().includes(query.toLowerCase());
@@ -53,9 +54,8 @@ export default function Storefront() {
 
   return <main className="storefront">
     <div className="top-hero">
-      <a className="rent-banner" href="https://cars.hubinbd.com/" target="_blank" rel="noreferrer">
-        <div className="rent-copy"><strong>🚙 cars.hubinbd.com</strong><b>অনলাইনে রেন্ট এ কার</b><span>বাংলাদেশের যেকোনো স্থানে গাড়ি বুক করুন</span><em>Book Now →</em></div>
-        <div className="rent-car-art" aria-hidden="true">🚘</div>
+      <a className="rent-banner" href="https://cars.hubinbd.com/" target="_blank" rel="noreferrer" aria-label="cars.hubinbd.com এ গাড়ি বুক করুন">
+        {!rentBannerFailed ? <img className="rent-banner-image" src="https://rgplfsmxkarqnlwwaowd.supabase.co/storage/v1/object/public/site-assets/online-rent-a-car-bangladesh-cars-hubinbd-com-hubinbd.jpg" alt="cars.hubinbd.com অনলাইন রেন্ট এ কার — Book Now" onError={() => setRentBannerFailed(true)} /> : <div className="rent-copy"><strong>🚙 cars.hubinbd.com</strong><b>অনলাইনে রেন্ট এ কার</b><span>বাংলাদেশের যেকোনো স্থানে গাড়ি বুক করুন</span><em>Book Now →</em></div>}
       </a>
       <div className="quick-tools">{[...tools, computer[4], computer[3]].map((item) => <a href={item[3]} key={item[1]}><span>{item[0]}</span>{item[1]}</a>)}</div>
     </div>
