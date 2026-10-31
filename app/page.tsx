@@ -8,7 +8,6 @@ export default function HomePage() {
     <>
       <SiteHeader />
       <SevenBanners />
-      <SevenBanners />
       <main className="mx-auto max-w-6xl px-5 py-16 sm:py-24">
         <section aria-labelledby="home-title">
           <p className="text-xs font-bold uppercase tracking-[.25em] text-[#ff7a1a]">Bangladesh's Digital Hub</p>
