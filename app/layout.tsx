@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://hubinbd.vercel.app"),
@@ -35,7 +36,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="bn">
-      <body>{children}</body>
+      <body><Script src="https://cdn.tailwindcss.com" strategy="beforeInteractive" />{children}</body>
     </html>
   );
 }
