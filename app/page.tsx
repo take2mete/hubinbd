@@ -1,12 +1,14 @@
 import SiteHeader from "@/components/site-header";
 import ToolCard from "@/components/tool-card";
 import SevenBanners from "@/components/SevenBanners";
+import SevenBanners from "@/components/SevenBanners";
 import { tools } from "@/lib/tools";
 
 export default function HomePage() {
   return (
     <>
       <SiteHeader />
+      <SevenBanners />
       <SevenBanners />
       <main className="mx-auto max-w-6xl px-5 py-16 sm:py-24">
         <section aria-labelledby="home-title">
