@@ -57,7 +57,7 @@ export default function Storefront() {
         <div className="rent-copy"><strong>🚙 cars.hubinbd.com</strong><b>অনলাইনে রেন্ট এ কার</b><span>বাংলাদেশের যেকোনো স্থানে গাড়ি বুক করুন</span><em>Book Now →</em></div>
         <div className="rent-car-art" aria-hidden="true">🚘</div>
       </a>
-      <div className="quick-tools">{[...tools.slice(1,3), tools[0], tools[3], computer[3]].map((item) => <a href={item[3]} key={item[1]}><span>{item[0]}</span>{item[1]}</a>)}</div>
+      <div className="quick-tools">{[...tools, computer[4], computer[3]].map((item) => <a href={item[3]} key={item[1]}><span>{item[0]}</span>{item[1]}</a>)}</div>
     </div>
 
     <div className="category-tiles">{categories.filter((item) => item.id !== "all").map((item) => item.href ? <a className="category-tile" href={item.href} key={item.id}><span>{item.icon}</span><b>{item.label}</b></a> : <button className={category === item.id ? "category-tile active" : "category-tile"} key={item.id} onClick={() => setCategory(item.id)}><span>{item.icon}</span><b>{item.label}</b></button>)}</div>
