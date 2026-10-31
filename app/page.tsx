@@ -1,5 +1,5 @@
-import LegacyFrame from "@/components/legacy-frame";
+import Storefront from "@/components/storefront";
 
 export default function HomePage() {
-  return <LegacyFrame />;
+  return <Storefront />;
 }
