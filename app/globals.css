@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -16,7 +17,7 @@ body {
   margin: 0;
   background: var(--background);
   color: #f5f5f5;
-  font-family: Arial, "Noto Sans Bengali", sans-serif;
+  font-family: "Hind Siliguri", Arial, sans-serif;
 }
 a { color: inherit; text-decoration: none; }
 button, input, select { font: inherit; }
