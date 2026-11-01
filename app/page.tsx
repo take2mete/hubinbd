@@ -17,16 +17,21 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <main className="min-h-screen bg-[#f5f6f8] text-[#172033]">
         <SevenBanners />
         <div className="mx-auto max-w-[1280px] px-3 pb-12 sm:px-5">
-          {!onlyCategory && <section className="mb-9 rounded-3xl bg-gradient-to-r from-[#172033] via-[#243650] to-[#344b68] px-6 py-9 text-white sm:px-10 sm:py-12">
-            <p className="text-xs font-bold uppercase tracking-[.22em] text-orange-300">Welcome to HubinBD</p>
-            <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight sm:text-5xl">বাংলাদেশের অনলাইন শপিং ও ডিজিটাল সার্ভিস হাব</h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/75 sm:text-base">পোশাক, প্রয়োজনীয় অনলাইন টুলস এবং কম্পিউটার সার্ভিস—সবকিছু এক জায়গায়।</p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/clothing" className="rounded-full bg-[#ff6b00] px-6 py-3 text-sm font-bold text-white hover:bg-orange-600">পোশাক দেখুন</Link>
-              <Link href="/tools" className="rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white hover:bg-white/10">অনলাইন টুলস</Link>
-              <Link href="/computer-work" className="rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white hover:bg-white/10">কম্পিউটার ওয়ার্ক</Link>
-            </div>
-          </section>}
+          {!onlyCategory && <nav aria-label="প্রধান ক্যাটাগরি" className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {[
+              { title: "ছেলেদের জামা", icon: "👔", href: "/?category=mens", color: "from-sky-100 to-blue-50" },
+              { title: "মেয়েদের জামা", icon: "👗", href: "/?category=womens", color: "from-pink-100 to-rose-50" },
+              { title: "শীতের জামা", icon: "🧥", href: "/clothing", color: "from-orange-100 to-amber-50" },
+              { title: "Tools", icon: "🛠️", href: "/tools", color: "from-emerald-100 to-green-50" },
+              { title: "কম্পিউটার ওয়ার্ক", icon: "💻", href: "/computer-work", color: "from-violet-100 to-indigo-50" },
+            ].map((item) => (
+              <Link key={item.title} href={item.href} className={`group flex min-h-[88px] items-center gap-3 rounded-2xl border border-zinc-200 bg-gradient-to-br ${item.color} px-3 py-3 text-[#172033] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:min-h-[96px] sm:px-4`}>
+                <span aria-hidden="true" className="shrink-0 text-3xl sm:text-4xl">{item.icon}</span>
+                <span className="min-w-0 flex-1 text-sm font-extrabold leading-snug sm:text-base">{item.title}</span>
+                <span aria-hidden="true" className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#172033] text-xs text-white transition group-hover:bg-[#ff6b00]">➜</span>
+              </Link>
+            ))}
+          </nav>}
           {onlyCategory && <div className="mb-6 flex items-center justify-between gap-3"><h1 className="text-2xl font-black text-[#172033]">{onlyCategory === "mens" ? "ছেলেদের জামা" : onlyCategory === "womens" ? "মেয়েদের জামা" : "বাচ্চাদের জামা"}</h1><Link href="/" className="text-sm font-semibold text-orange-600 hover:underline">সব ক্যাটাগরি দেখুন</Link></div>}
           <MarketplaceProducts onlyCategory={onlyCategory} />
           {!onlyCategory && <section className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2">
