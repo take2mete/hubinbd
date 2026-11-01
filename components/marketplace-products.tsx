@@ -23,6 +23,18 @@ const sections = [
   { key: "mens", title: "ছেলেদের জামা", aliases: ["ছেলেদের জামা", "mens", "men", "পুরুষ"] },
 ];
 
+function matchesCategory(category: string, aliases: string[]) {
+  const value = category.trim().toLocaleLowerCase();
+  return aliases.some((alias) => {
+    const normalized = alias.toLocaleLowerCase();
+    if (value === normalized) return true;
+    if (/^[a-z]+$/.test(normalized)) {
+      return new RegExp(`(^|[^a-z])${normalized}([^a-z]|$)`).test(value);
+    }
+    return value.includes(normalized);
+  });
+}
+
 function money(value: number | string | null) {
   const amount = Number(value ?? 0);
   return Number.isFinite(amount) ? new Intl.NumberFormat("bn-BD").format(amount) : "0";
@@ -76,12 +88,10 @@ export default function MarketplaceProducts({ onlyCategory }: { onlyCategory?: "
   }, []);
 
   const visibleSections = onlyCategory ? sections.filter((section) => section.key === onlyCategory) : sections;
-  const grouped = useMemo(() => {
-    return visibleSections.map((section) => ({
-      ...section,
-      products: products.filter((product) => section.aliases.some((alias) => product.category?.toLocaleLowerCase().includes(alias.toLocaleLowerCase()))),
-    }));
-  }, [products, visibleSections]);
+  const grouped = useMemo(() => visibleSections.map((section) => ({
+    ...section,
+    products: products.filter((product) => matchesCategory(product.category, section.aliases)),
+  })), [products, visibleSections]);
 
   return (
     <div className="space-y-10">
@@ -94,7 +104,7 @@ export default function MarketplaceProducts({ onlyCategory }: { onlyCategory?: "
             </div>
             {!onlyCategory && <Link href="/clothing" className="shrink-0 text-xs font-bold text-[#e65f00] hover:underline">সব পণ্য দেখুন ↗</Link>}
           </div>
-          {loading ? <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-zinc-200" />)}</div> : <ProductGrid products={grouped.find((item) => item.key === section.key)?.products ?? []} />}
+          {loading ? <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-zinc-200" />)}</div> : <ProductGrid products={section.products} />}
         </section>
       ))}
     </div>
