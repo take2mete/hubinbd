@@ -44,6 +44,7 @@ export default function ToolsPage() {
           </section>
         </div>
       </main>
+      <SiteFooter />
     </>
   );
 }
