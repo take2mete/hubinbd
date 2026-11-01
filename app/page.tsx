@@ -1,6 +1,7 @@
 import Link from "next/link";
 import SiteHeader from "@/components/site-header";
 import SevenBanners from "@/components/SevenBanners";
+import SiteFooter from "@/components/site-footer";
 import MarketplaceProducts from "@/components/marketplace-products";
 
 type HomePageProps = { searchParams: Promise<{ category?: string }> };
@@ -34,7 +35,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </section>}
         </div>
       </main>
-      <footer className="border-t border-zinc-200 bg-white px-5 py-6 text-center text-xs text-zinc-500">© {new Date().getFullYear()} HubinBD · Made in Bangladesh</footer>
+      <SiteFooter />
     </>
   );
 }
