@@ -56,8 +56,7 @@ export default function SiteHeader() {
       <div className="mx-auto max-w-[1280px] px-3 sm:px-4">
         <div className="flex flex-wrap items-center gap-3 py-3 lg:gap-6">
           <Link href="/" aria-label="HubinBD হোমপেজ" className="flex shrink-0 items-center gap-2.5">
-            <span className="grid h-10 w-10 place-items-center rounded-[10px] bg-[#ff6b00] text-xl font-extrabold text-white">H</span>
-            <span className="leading-none"><span className="font-[Inter,Arial,sans-serif] text-[18px] font-extrabold tracking-tight text-[#ff6b00]">hubinbd</span><span className="ml-0.5 rounded bg-black px-1 py-0.5 font-[Inter,Arial,sans-serif] text-[9px] font-bold text-white">.COM</span><span className="mt-1 block text-[9px] font-semibold tracking-[0.14em] text-zinc-400">HUB IN BANGLADESH</span></span>
+            <img src="https://rgplfsmxkarqnlwwaowd.supabase.co/storage/v1/object/public/site-assets/logo.png" alt="HubinBD — মার্কেটপ্লেস, টুলস ও সার্ভিস হাব" className="h-auto w-[190px] max-w-[42vw] object-contain sm:w-[230px]" width="1080" height="307" fetchPriority="high" />
           </Link>
           <form role="search" action="/search" method="GET" className="order-3 flex h-12 w-full min-w-0 items-center rounded-full border-2 border-[#101828] bg-white pl-1 pr-1 lg:order-none lg:ml-2 lg:max-w-[560px] lg:flex-1">
             <div ref={categoryRef} className="relative shrink-0">
