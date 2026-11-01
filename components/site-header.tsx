@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const categories = [
   { value: "all", label: "সব ক্যাটাগরি" },
@@ -13,11 +14,12 @@ const categories = [
 ];
 
 const navLinks = [
-  { href: "/?category=mens", label: "ছেলেদের জামা" },
-  { href: "/?category=womens", label: "মেয়েদের জামা" },
-  { href: "/?category=kids", label: "বাচ্চাদের জামা" },
-  { href: "/tools", label: "টুলস" },
-  { href: "/computer-work", label: "কম্পিউটার ওয়ার্ক" },
+  { href: "/", label: "হোম", icon: "⌂", match: "home" },
+  { href: "/?category=mens", label: "ছেলেদের জামা", icon: "👕" },
+  { href: "/?category=womens", label: "মেয়েদের জামা", icon: "👗" },
+  { href: "/clothing", label: "শীতের জামা", icon: "🧥" },
+  { href: "/tools", label: "Tools", icon: "🔧" },
+  { href: "/computer-work", label: "কম্পিউটার ওয়ার্ক", icon: "💻" },
 ];
 
 function SearchIcon() {
@@ -52,9 +54,9 @@ export default function SiteHeader() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-200 bg-[#f5f5f5] text-[#101828] shadow-[0_2px_14px_rgba(16,24,40,0.045)]">
+    <header className="sticky top-0 z-50 border-b border-[#dbe5f5] bg-white text-[#101828] shadow-[0_6px_24px_rgba(15,45,90,0.08)]">
       <div className="mx-auto max-w-[1280px] px-3 sm:px-4">
-        <div className="flex flex-wrap items-center gap-3 py-3 lg:gap-6">
+        <div className="flex flex-wrap items-center gap-3 py-3.5 lg:gap-6">
           <Link href="/" aria-label="HubinBD হোমপেজ" className="flex shrink-0 items-center gap-2.5">
             <img src="https://rgplfsmxkarqnlwwaowd.supabase.co/storage/v1/object/public/site-assets/logo.png" alt="HubinBD — মার্কেটপ্লেস, টুলস ও সার্ভিস হাব" className="h-auto w-[190px] max-w-[42vw] object-contain sm:w-[230px]" width="1080" height="307" fetchPriority="high" />
           </Link>
@@ -66,7 +68,7 @@ export default function SiteHeader() {
             </div>
             <span className="hidden h-5 w-px bg-zinc-200 sm:block" />
             <input name="q" type="search" placeholder="প্রোডাক্ট, গাড়ি, টুলস খুঁজুন..." aria-label="প্রোডাক্ট, গাড়ি বা টুলস খুঁজুন" className="min-w-0 flex-1 bg-transparent px-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 sm:px-3 sm:text-[14px]" />
-            <button type="submit" aria-label="খুঁজুন" className="flex h-9 shrink-0 items-center gap-2 rounded-full bg-[#101828] px-3.5 text-[13px] font-semibold text-white transition hover:bg-[#263247] sm:px-5"><SearchIcon /><span className="hidden sm:inline">খুঁজুন</span></button>
+            <button type="submit" aria-label="খুঁজুন" className="flex h-9 shrink-0 items-center gap-2 rounded-full bg-[#0645a5] px-3.5 text-[13px] font-semibold text-white transition hover:bg-[#07377e] sm:px-5"><SearchIcon /><span className="hidden sm:inline">খুঁজুন</span></button>
           </form>
           <div className="ml-auto flex shrink-0 items-center gap-2.5">
             <Link href="/cart" aria-label="শপিং কার্ট" className="relative grid h-11 w-11 place-items-center rounded-xl bg-[#101828] text-white transition hover:bg-[#263247]"><CartIcon /><span className="absolute -right-1.5 -top-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[#ff6b00] px-1 text-[10px] font-bold text-white">0</span></Link>
