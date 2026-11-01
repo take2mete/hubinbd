@@ -13,8 +13,9 @@ const categories = [
 ];
 
 const navLinks = [
-  { href: "/", label: "হোম" },
-  { href: "/clothing", label: "পোশাক" },
+  { href: "/?category=mens", label: "ছেলেদের জামা" },
+  { href: "/?category=womens", label: "মেয়েদের জামা" },
+  { href: "/?category=kids", label: "বাচ্চাদের জামা" },
   { href: "/tools", label: "টুলস" },
   { href: "/computer-work", label: "কম্পিউটার ওয়ার্ক" },
 ];
@@ -74,13 +75,13 @@ export default function SiteHeader() {
           </div>
         </div>
       </div>
-      <nav aria-label="প্রধান নেভিগেশন" className="hidden border-t border-zinc-200/80 lg:block">
-        <div className="mx-auto flex max-w-[1280px] items-center gap-1 px-4">
-          {navLinks.map((item) => <Link key={item.href} href={item.href} className="rounded-lg px-3.5 py-2.5 text-[13px] font-semibold text-zinc-700 transition hover:bg-white hover:text-[#ff6b00]">{item.label}</Link>)}
-          <a href="https://cars.hubinbd.com/" className="ml-auto rounded-lg px-3.5 py-2.5 text-[13px] font-bold text-[#ff6b00] transition hover:bg-white">রেন্ট-এ-কার ↗</a>
+      <nav aria-label="প্রধান নেভিগেশন" className="border-t border-zinc-200/80">
+        <div className="mx-auto flex max-w-[1280px] items-center gap-1 overflow-x-auto px-3 py-1.5 sm:px-4">
+          {navLinks.map((item) => <Link key={item.href} href={item.href} className="shrink-0 rounded-lg px-3 py-2 text-[12px] font-semibold text-zinc-700 transition hover:bg-white hover:text-[#ff6b00] sm:px-3.5 sm:text-[13px]">{item.label}</Link>)}
+          <a href="https://cars.hubinbd.com/" className="ml-auto shrink-0 rounded-lg px-3 py-2 text-[12px] font-bold text-[#ff6b00] transition hover:bg-white sm:text-[13px]">রেন্ট-এ-কার ↗</a>
         </div>
       </nav>
-      {menuOpen && <nav id="hubinbd-menu" aria-label="মোবাইল ও অতিরিক্ত মেনু" className="border-t border-zinc-200 bg-white px-4 py-3 shadow-lg"><div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3"><Link href="/login" onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm font-semibold text-[#101828] hover:bg-orange-50 hover:text-[#ff6b00]">লগইন / সাইন আপ</Link>{navLinks.map((item) => <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm text-zinc-700 hover:bg-orange-50 hover:text-[#ff6b00]">{item.label}</Link>)}<Link href="/clothing" onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm text-zinc-700 hover:bg-orange-50">পোশাকের সব ক্যাটাগরি</Link><a href="https://cars.hubinbd.com/" className="rounded-xl px-4 py-3 text-sm font-semibold text-[#ff6b00] hover:bg-orange-50">রেন্ট-এ-কার বুকিং ↗</a></div></nav>}
+      {menuOpen && <nav id="hubinbd-menu" aria-label="মোবাইল ও অতিরিক্ত মেনু" className="border-t border-zinc-200 bg-white px-4 py-3 shadow-lg"><div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3"><Link href="/login" onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm font-semibold text-[#101828] hover:bg-orange-50 hover:text-[#ff6b00]">লগইন / সাইন আপ</Link>{navLinks.map((item) => <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm text-zinc-700 hover:bg-orange-50 hover:text-[#ff6b00]">{item.label}</Link>)}<a href="https://cars.hubinbd.com/" className="rounded-xl px-4 py-3 text-sm font-semibold text-[#ff6b00] hover:bg-orange-50">রেন্ট-এ-কার বুকিং ↗</a></div></nav>}
     </header>
   );
 }
