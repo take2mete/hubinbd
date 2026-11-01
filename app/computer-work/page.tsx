@@ -46,6 +46,7 @@ export default function ComputerWorkPage() {
           <p className="mt-8 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900">সার্ভিস অর্ডার, মূল্য ও যোগাযোগের ব্যবস্থা পরবর্তী ধাপে যুক্ত করতে হবে।</p>
         </div>
       </main>
+      <SiteFooter />
     </>
   );
 }
