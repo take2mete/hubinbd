@@ -18,7 +18,6 @@ type Product = {
 };
 
 const sections = [
-  { key: "kids", title: "বাচ্চাদের জামা", aliases: ["বাচ্চাদের জামা", "kids", "children", "শিশু"] },
   { key: "womens", title: "মেয়েদের জামা", aliases: ["মেয়েদের জামা", "মেয়েদের জামা", "womens", "women", "ladies"] },
   { key: "mens", title: "ছেলেদের জামা", aliases: ["ছেলেদের জামা", "mens", "men", "পুরুষ"] },
 ];
@@ -66,7 +65,7 @@ function ProductGrid({ products }: { products: Product[] }) {
   );
 }
 
-export default function MarketplaceProducts({ onlyCategory }: { onlyCategory?: "kids" | "womens" | "mens" }) {
+export default function MarketplaceProducts({ onlyCategory }: { onlyCategory?: "womens" | "mens" }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
