@@ -20,6 +20,7 @@ type Product = {
 const sections = [
   { key: "womens", title: "মেয়েদের জামা", aliases: ["মেয়েদের জামা", "মেয়েদের জামা", "womens", "women", "ladies"] },
   { key: "mens", title: "ছেলেদের জামা", aliases: ["ছেলেদের জামা", "mens", "men", "পুরুষ"] },
+  { key: "other", title: "অন্যান্য", aliases: ["অন্যান্য", "onno", "other", "others"] },
 ];
 
 function matchesCategory(category: string, aliases: string[]) {
