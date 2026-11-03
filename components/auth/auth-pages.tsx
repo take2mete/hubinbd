@@ -12,7 +12,18 @@ const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-4 py-3
 const buttonClass = "w-full rounded-xl bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60";
 const panelClass = "w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8";
 
-function message(error: unknown) { return error instanceof Error ? error.message : "একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।"; }
+function message(error: unknown) {
+  if (error && typeof error === "object") {
+    const value = error as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown };
+    const parts = [value.message, value.details, value.hint, value.code]
+      .filter((part): part is string => typeof part === "string" && part.trim().length > 0);
+    if (parts.length) return parts.join(" — ");
+  }
+  return error instanceof Error ? error.message : "একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।";
+}
+function englishDigits(value: string) {
+  return value.replace(/[০-৯]/g, digit => String("০১২৩৪৫৬৭৮৯".indexOf(digit)));
+}
 
 async function roleFor(userId: string): Promise<Role> {
   const { data: roleRow, error } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
@@ -60,17 +71,17 @@ export function LoginPage({seller=false,admin=false}:{seller?:boolean;admin?:boo
 }
 export function RegisterPage(){return <Shell title="নতুন অ্যাকাউন্ট" subtitle="HubinBD-তে কেনাকাটা ও সেবা ব্যবহারের জন্য রেজিস্টার করুন।"><AuthFields mode="register"/><p className="mt-5 text-center text-sm text-slate-600">আগে থেকেই অ্যাকাউন্ট আছে? <Link href="/login" className="font-semibold text-blue-700">লগইন</Link></p></Shell>;}
 export function SellerRegisterPage(){
-  const router=useRouter();const [shop,setShop]=useState("");const [phone,setPhone]=useState("");const [district,setDistrict]=useState("");const [upazila,setUpazila]=useState("");const [busy,setBusy]=useState(false);const [error,setError]=useState("");const [notice,setNotice]=useState("");
+  const router=useRouter();const [shop,setShop]=useState("");const [phone,setPhone]=useState("");const [district,setDistrict]=useState("");const [upazila,setUpazila]=useState("");const [busy,setBusy]=useState(false);const [authChecking,setAuthChecking]=useState(true);const [error,setError]=useState("");const [notice,setNotice]=useState("");\n  useEffect(()=>{let active=true;(async()=>{try{const {data:{user},error:authError}=await supabase.auth.getUser();if(authError)throw authError;if(!user){router.replace("/seller/login?next=/seller/register");return;}}catch(err){if(active)setError(message(err));}finally{if(active)setAuthChecking(false);}})();return()=>{active=false;};},[router]);
   async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();setBusy(true);setError("");setNotice("");try{
-    const {data:{user},error:authError}=await supabase.auth.getUser();if(authError)throw authError;if(!user){router.push("/seller/login?next=/seller/register");return;}
+    const {data:{user},error:authError}=await supabase.auth.getUser();if(authError)throw authError;if(!user){router.replace("/seller/login?next=/seller/register");return;}\n    const normalizedPhone=englishDigits(phone).trim();if(!normalizedPhone)throw new Error("মোবাইল নম্বর দিন।");
     const {data:existing,error:existingError}=await supabase.from("vendors").select("status").eq("user_id",user.id).maybeSingle();if(existingError)throw existingError;
     if(existing){setNotice(existing.status==="approved"?"আপনার Seller অ্যাকাউন্ট অনুমোদিত।":"আপনার আবেদন আগে থেকেই জমা আছে। অনুমোদনের অপেক্ষায় থাকুন।");return;}
-    const {error:insertError}=await supabase.from("vendors").insert({user_id:user.id,business_name:shop.trim(),contact_name:String(user.user_metadata?.full_name||user.email?.split("@")[0]||"Seller"),phone:phone.trim(),address:[upazila.trim(),district.trim()].filter(Boolean).join(", "),status:"pending"});
+    const {error:insertError}=await supabase.from("vendors").insert({user_id:user.id,business_name:shop.trim(),contact_name:String(user.user_metadata?.full_name||user.email?.split("@")[0]||"Seller"),phone:normalizedPhone,address:[upazila.trim(),district.trim()].filter(Boolean).join(", "),status:"pending"});
     if(insertError)throw insertError;setNotice("Seller আবেদন জমা হয়েছে। Admin অনুমোদন না দেওয়া পর্যন্ত Dashboard সীমিত থাকবে।");
   }catch(err){setError(message(err));}finally{setBusy(false);}}
-  return <Shell title="Seller Registration" subtitle="দোকানের তথ্য দিয়ে বিক্রেতা হওয়ার আবেদন করুন।"><form onSubmit={submit} className="space-y-4">
+  if(authChecking)return <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-slate-700">লগইন যাচাই হচ্ছে...</main>;\n  return <Shell title="Seller Registration" subtitle="দোকানের তথ্য দিয়ে বিক্রেতা হওয়ার আবেদন করুন।"><form onSubmit={submit} className="space-y-4">
     <label className="block text-sm font-medium">দোকানের নাম<input required value={shop} onChange={e=>setShop(e.target.value)} className={inputClass+" mt-1.5"}/></label>
-    <label className="block text-sm font-medium">মোবাইল নম্বর<input required type="tel" value={phone} onChange={e=>setPhone(e.target.value)} className={inputClass+" mt-1.5"}/></label>
+    <label className="block text-sm font-medium">মোবাইল নম্বর<input required type="tel" value={phone} onChange={e=>setPhone(englishDigits(e.target.value))} className={inputClass+" mt-1.5"}/></label>
     <label className="block text-sm font-medium">জেলা<input required value={district} onChange={e=>setDistrict(e.target.value)} className={inputClass+" mt-1.5"}/></label>
     <label className="block text-sm font-medium">উপজেলা<input required value={upazila} onChange={e=>setUpazila(e.target.value)} className={inputClass+" mt-1.5"}/></label>
     {error&&<p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}{notice&&<p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">{notice}</p>}
