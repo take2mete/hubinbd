@@ -1,0 +1,1 @@
+import HomepageEditor from "@/components/admin/homepage-editor"; export default function Page(){return <HomepageEditor/>;}
