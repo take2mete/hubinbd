@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
+import ServiceOrderForm from "@/components/service-order-form";
 
 export const metadata: Metadata = {
   title: "কম্পিউটার ওয়ার্ক ও ডিজাইন সার্ভিস",
@@ -44,7 +45,7 @@ export default function ComputerWorkPage() {
               </article>
             ))}
           </section>
-          <p className="mt-8 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900">সার্ভিস অর্ডার, মূল্য ও যোগাযোগের ব্যবস্থা পরবর্তী ধাপে যুক্ত করতে হবে।</p>
+          <ServiceOrderForm />
         </div>
       </main>
       <SiteFooter />
