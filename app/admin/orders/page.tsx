@@ -1,0 +1,1 @@
+import AdminServiceOrders from "@/components/admin/admin-service-orders"; export default function Page(){return <AdminServiceOrders/>;}
