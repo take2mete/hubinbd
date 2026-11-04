@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
-type Role = "owner_admin" | "sub_admin" | "vendor" | "customer" | null;
+type Role = "owner_admin" | "sub_admin" | "admin" | "vendor" | "customer" | null;
 type Vendor = { user_id: string; business_name: string; contact_name: string; phone: string; address: string; status: string; submitted_at: string };
 
 const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
@@ -29,14 +29,14 @@ async function roleFor(userId: string): Promise<Role> {
   const { data: roleRow, error } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
   if (error) throw error;
   const role = roleRow?.role as Role | undefined;
-  if (role === "owner_admin" || role === "sub_admin" || role === "vendor" || role === "customer") return role;
+  if (role === "owner_admin" || role === "sub_admin" || role === "admin" || role === "vendor" || role === "customer") return role;
   const { data: vendor, error: vendorError } = await supabase.from("vendors").select("user_id").eq("user_id", userId).maybeSingle();
   if (vendorError) throw vendorError;
   return vendor ? "vendor" : null;
 }
 async function destinationFor(userId: string) {
   const role = await roleFor(userId);
-  if (role === "owner_admin" || role === "sub_admin") return "/admin";
+  if (role === "owner_admin" || role === "sub_admin" || role === "admin") return "/admin";
   if (role === "vendor") return "/seller/dashboard";
   return "/";
 }
@@ -49,7 +49,7 @@ function AuthFields({ mode, seller = false, admin = false }: { mode: "login" | "
     if(mode==="register"){const {data,error:signUpError}=await supabase.auth.signUp({email,password,options:{data:{full_name:name}}});if(signUpError)throw signUpError;if(!data.session){setNotice("রেজিস্ট্রেশন হয়েছে। ইমেইল verification সম্পন্ন করে লগইন করুন।");return;}router.replace("/");return;}
     const {data,error:signInError}=await supabase.auth.signInWithPassword({email,password});if(signInError)throw signInError;
     const role=await roleFor(data.user.id);
-    if(admin&&role!=="owner_admin"&&role!=="sub_admin"){await supabase.auth.signOut();throw new Error("এই অ্যাকাউন্টের Admin অনুমতি নেই।");}
+    if(admin&&role!=="owner_admin"&&role!=="sub_admin"&&role!=="admin"){await supabase.auth.signOut();throw new Error("এই অ্যাকাউন্টের Admin অনুমতি নেই।");}
     if(seller&&role!=="vendor"){router.replace("/seller/register");return;}
     router.replace(admin?"/admin":seller?"/seller/dashboard":await destinationFor(data.user.id));
   }catch(err){setError(message(err));}finally{setBusy(false);}}
