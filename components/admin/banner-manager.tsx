@@ -14,7 +14,7 @@ export default function BannerManager() {
   const {data:{session}}=await supabase.auth.getSession();
   if(!session){if(live)setReady(true);return;}
   const {data:role}=await supabase.from("user_roles").select("role").eq("user_id",session.user.id).maybeSingle();
-  if(!role || !["owner_admin","sub_admin"].includes(role.role)){await supabase.auth.signOut();if(live){setMessage("এই পেজ ব্যবহারের অনুমতি নেই।");setReady(true);}return;}
+  if(!role || !["owner_admin","sub_admin","admin"].includes(role.role)){await supabase.auth.signOut();if(live){setMessage("এই পেজ ব্যবহারের অনুমতি নেই।");setReady(true);}return;}
   const {data}=await supabase.from("banners").select("slot,image_url,link_url,title").order("slot");
   if(live){setEmail(session.user.email||"");if(data)setItems(bannerDefaults.map(b=>data.find(x=>x.slot===b.slot)||b));setReady(true);}
  })();return()=>{live=false;};},[]);
