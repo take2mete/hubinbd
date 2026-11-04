@@ -55,7 +55,7 @@ function AuthFields({ mode, seller = false, admin = false }: { mode: "login" | "
   }catch(err){setError(message(err));}finally{setBusy(false);}}
   return <form onSubmit={submit} className="space-y-4">
     {mode==="register"&&<label className="block text-sm font-medium">আপনার নাম<input required value={name} onChange={e=>setName(e.target.value)} className={inputClass+" mt-1.5"} autoComplete="name"/></label>}
-    <label className="block text-sm font-medium">মোবাইল নম্বর<input required type="tel" value={phone} onChange={e=>setPhone(englishDigits(e.target.value))} className={inputClass+" mt-1.5"} autoComplete="tel"/></label>}
+    {mode==="register"&&<label className="block text-sm font-medium">মোবাইল নম্বর<input required type="tel" value={phone} onChange={e=>setPhone(englishDigits(e.target.value))} className={inputClass+" mt-1.5"} autoComplete="tel"/></label>}
     {mode==="register"&&<label className="block text-sm font-medium">বাসার ঠিকানা<input required value={address} onChange={e=>setAddress(e.target.value)} className={inputClass+" mt-1.5"} autoComplete="street-address"/></label>}
     <label className="block text-sm font-medium">ইমেইল<input required type="email" value={email} onChange={e=>setEmail(e.target.value)} className={inputClass+" mt-1.5"} autoComplete="email"/></label>
     <label className="block text-sm font-medium">পাসওয়ার্ড<input required minLength={6} type="password" value={password} onChange={e=>setPassword(e.target.value)} className={inputClass+" mt-1.5"} autoComplete={mode==="login"?"current-password":"new-password"}/></label>
