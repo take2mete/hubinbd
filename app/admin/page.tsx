@@ -1,2 +1,1 @@
-import { redirect } from "next/navigation";
-export default function Page() { redirect("/admin/vendors"); }
+import Link from "next/link"; export default function Page(){const items=[["পণ্য পরিচালনা","/admin/products"],["ব্যানার পরিচালনা","/admin/banners"],["Seller আবেদন","/admin/vendors"]];return <main className="min-h-screen bg-slate-50 p-6"><div className="mx-auto max-w-5xl"><h1 className="text-3xl font-black">HubinBD Admin Dashboard</h1><div className="mt-6 grid gap-4 sm:grid-cols-3">{items.map(([t,u])=><Link key={u} href={u} className="rounded-xl border bg-white p-6 font-bold">{t} →</Link>)}</div></div></main>}
