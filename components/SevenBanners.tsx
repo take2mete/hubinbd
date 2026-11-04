@@ -6,7 +6,7 @@ import { bannerDefaults } from "@/lib/banners";
 import { supabase } from "@/lib/supabase/client";
 
 const icons = ["📄", "▦", "🎨", "🖼️", "📒", "📊"];
-const destinationForSlot = (slot: number) => slot === 1 ? "https://cars.hubinbd.com/" : slot >= 2 && slot <= 6 ? "/tools" : "/computer-work";
+const destinationForSlot = (slot: number) => slot === 1 ? "https://cars.hubinbd.com/" : slot >= 2 && slot <= 5 ? "/tools" : "/computer-work";
 
 export default function SevenBanners() {
   const [items, setItems] = useState(bannerDefaults);
