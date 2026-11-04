@@ -44,9 +44,9 @@ function Shell({ title, subtitle, children }: { title: string; subtitle: string;
   return <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10 text-slate-900"><section className={panelClass}><Link href="/" aria-label="HubinBD home" className="text-sm font-bold text-blue-700">HubinBD</Link><h1 className="mt-5 text-2xl font-bold">{title}</h1><p className="mt-2 text-sm text-slate-600">{subtitle}</p><div className="mt-7">{children}</div></section></main>;
 }
 function AuthFields({ mode, seller = false, admin = false }: { mode: "login" | "register"; seller?: boolean; admin?: boolean }) {
-  const router = useRouter(); const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [name,setName]=useState(""); const [busy,setBusy]=useState(false); const [error,setError]=useState(""); const [notice,setNotice]=useState("");
+  const router = useRouter(); const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [name,setName]=useState(""); const [phone,setPhone]=useState(""); const [address,setAddress]=useState(""); const [confirmPassword,setConfirmPassword]=useState(""); const [busy,setBusy]=useState(false); const [error,setError]=useState(""); const [notice,setNotice]=useState("");
   async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();setBusy(true);setError("");setNotice("");try{
-    if(mode==="register"){const {data,error:signUpError}=await supabase.auth.signUp({email,password,options:{data:{full_name:name}}});if(signUpError)throw signUpError;if(!data.session){setNotice("রেজিস্ট্রেশন হয়েছে। ইমেইল verification সম্পন্ন করে লগইন করুন।");return;}router.replace("/");return;}
+    if(mode==="register"){if(password!==confirmPassword)throw new Error("পাসওয়ার্ড ও Confirm Password মিলছে না।");const {data,error:signUpError}=await supabase.auth.signUp({email,password,options:{data:{full_name:name.trim(),phone:englishDigits(phone).trim(),address:address.trim()}}});if(signUpError)throw signUpError;if(!data.session){setNotice("রেজিস্ট্রেশন হয়েছে। ইমেইল verification সম্পন্ন করে লগইন করুন।");return;}router.replace("/");return;}
     const {data,error:signInError}=await supabase.auth.signInWithPassword({email,password});if(signInError)throw signInError;
     const role=await roleFor(data.user.id);
     if(admin&&role!=="owner_admin"&&role!=="sub_admin"&&role!=="admin"){await supabase.auth.signOut();throw new Error("এই অ্যাকাউন্টের Admin অনুমতি নেই।");}
@@ -55,8 +55,11 @@ function AuthFields({ mode, seller = false, admin = false }: { mode: "login" | "
   }catch(err){setError(message(err));}finally{setBusy(false);}}
   return <form onSubmit={submit} className="space-y-4">
     {mode==="register"&&<label className="block text-sm font-medium">আপনার নাম<input required value={name} onChange={e=>setName(e.target.value)} className={inputClass+" mt-1.5"} autoComplete="name"/></label>}
+    <label className="block text-sm font-medium">মোবাইল নম্বর<input required type="tel" value={phone} onChange={e=>setPhone(englishDigits(e.target.value))} className={inputClass+" mt-1.5"} autoComplete="tel"/></label>}
+    {mode==="register"&&<label className="block text-sm font-medium">বাসার ঠিকানা<input required value={address} onChange={e=>setAddress(e.target.value)} className={inputClass+" mt-1.5"} autoComplete="street-address"/></label>}
     <label className="block text-sm font-medium">ইমেইল<input required type="email" value={email} onChange={e=>setEmail(e.target.value)} className={inputClass+" mt-1.5"} autoComplete="email"/></label>
     <label className="block text-sm font-medium">পাসওয়ার্ড<input required minLength={6} type="password" value={password} onChange={e=>setPassword(e.target.value)} className={inputClass+" mt-1.5"} autoComplete={mode==="login"?"current-password":"new-password"}/></label>
+    {mode==="register"&&<label className="block text-sm font-medium">Confirm Password<input required minLength={6} type="password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className={inputClass+" mt-1.5"} autoComplete="new-password"/></label>}
     {error&&<p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}{notice&&<p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">{notice}</p>}
     <button disabled={busy} className={buttonClass}>{busy?"অপেক্ষা করুন...":mode==="login"?"লগইন":"অ্যাকাউন্ট তৈরি করুন"}</button>
   </form>;
