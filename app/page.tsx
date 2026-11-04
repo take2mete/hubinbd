@@ -18,7 +18,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <SevenBanners />
         <div className="mx-auto max-w-[1280px] px-3 pb-12 sm:px-5">
           {onlyCategory && <div className="mb-6 flex items-center justify-between gap-3"><h1 className="text-2xl font-black text-[#172033]">{onlyCategory === "mens" ? "ছেলেদের জামা" : "মেয়েদের জামা"}</h1><Link href="/" className="text-sm font-semibold text-orange-600 hover:underline">সব ক্যাটাগরি দেখুন</Link></div>}
-          {onlyCategory && <MarketplaceProducts onlyCategory={onlyCategory} />}
+          <MarketplaceProducts onlyCategory={onlyCategory} />
         </div>
       </main>
       <SiteFooter />
