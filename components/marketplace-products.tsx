@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase/client";
 type Product = {
   id: string; name: string; name_bn: string | null; image_urls: string[] | null;
   price: number | string; old_price: number | string | null; category: string;
-  stock: number | null; sold: string | null; created_at: string;
+  stock: number | null; sold: number | string | null; created_at: string;
 };
 
 const sections = [
