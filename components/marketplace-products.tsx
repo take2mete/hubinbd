@@ -28,8 +28,8 @@ function matchesCategory(category: string, aliases: string[]) {
   });
 }
 
-function soldCount(value: string | null) {
-  const normalized = (value || "0").replace(/[০-৯]/g, (digit) => String("০১২৩৪৫৬৭৮৯".indexOf(digit)));
+function soldCount(value: string | number | null) {
+  const normalized = String(value ?? "0").replace(/[০-৯]/g, (digit) => String("০১২৩৪৫৬৭৮৯".indexOf(digit)));
   const parsed = Number.parseInt(normalized.replace(/[^0-9]/g, ""), 10);
   return Number.isFinite(parsed) ? parsed : 0;
 }
