@@ -8,17 +8,19 @@ const categories = [
   { value: "mens", label: "ছেলেদের জামা" },
   { value: "womens", label: "মেয়েদের জামা" },
   { value: "kids", label: "বাচ্চাদের জামা" },
-  { value: "tools", label: "টুলস ও যন্ত্রপাতি" },
+  { value: "winter", label: "শীতের জামা" },
+  { value: "tools", label: "টুলস" },
   { value: "computer-work", label: "কম্পিউটার ওয়ার্ক" },
 ];
 
 const navLinks = [
-  { href: "/", label: "হোম", icon: "⌂", match: "home" },
-  { href: "/?category=mens", label: "ছেলেদের জামা", icon: "👕" },
-  { href: "/?category=womens", label: "মেয়েদের জামা", icon: "👗" },
-  { href: "/clothing", label: "শীতের জামা", icon: "🧥" },
-  { href: "/tools", label: "Tools", icon: "🔧" },
-  { href: "/computer-work", label: "কম্পিউটার ওয়ার্ক", icon: "💻" },
+  { href: "/", label: "হোম" },
+  { href: "/?category=mens", label: "ছেলেদের জামা" },
+  { href: "/?category=womens", label: "মেয়েদের জামা" },
+  { href: "/?category=kids", label: "বাচ্চাদের জামা" },
+  { href: "/?category=winter", label: "শীতের জামা" },
+  { href: "/tools", label: "টুলস" },
+  { href: "/computer-work", label: "কম্পিউটার ওয়ার্ক" },
 ];
 
 function SearchIcon() {
@@ -53,34 +55,34 @@ export default function SiteHeader() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#dbe5f5] bg-white text-[#101828] shadow-[0_6px_24px_rgba(15,45,90,0.08)]">
-      <div className="mx-auto max-w-[1280px] px-3 sm:px-4">
-        <div className="flex flex-wrap items-center gap-3 py-3.5 lg:gap-6">
-          <Link href="/" aria-label="HubinBD হোমপেজ" className="flex shrink-0 items-center gap-2.5">
-            <img src="https://rgplfsmxkarqnlwwaowd.supabase.co/storage/v1/object/public/site-assets/logo.png" alt="HubinBD — মার্কেটপ্লেস, টুলস ও সার্ভিস হাব" className="h-auto w-[190px] max-w-[42vw] object-contain sm:w-[230px]" width="1080" height="307" fetchPriority="high" />
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 text-[#101828] shadow-[0_5px_24px_rgba(15,23,42,.07)] backdrop-blur-xl">
+      <div className="mx-auto max-w-[1320px] px-3 sm:px-5">
+        <div className="flex flex-wrap items-center gap-3 py-3 lg:flex-nowrap lg:gap-6">
+          <Link href="/" aria-label="HubinBD হোমপেজ" className="flex shrink-0 items-center">
+            <img src="https://rgplfsmxkarqnlwwaowd.supabase.co/storage/v1/object/public/site-assets/logo.png" alt="HubinBD" className="h-auto w-[168px] max-w-[40vw] object-contain sm:w-[205px]" width="1080" height="307" fetchPriority="high" />
           </Link>
-          <form role="search" action="/search" method="GET" className="order-3 flex h-12 w-full min-w-0 items-center rounded-full border-2 border-[#101828] bg-white pl-1 pr-1 lg:order-none lg:ml-2 lg:max-w-[560px] lg:flex-1">
+          <form role="search" action="/search" method="GET" className="order-3 flex h-11 w-full min-w-0 items-center rounded-full border border-slate-300 bg-slate-50 p-1 transition focus-within:border-blue-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-100 lg:order-none lg:ml-2 lg:max-w-[590px] lg:flex-1">
             <div ref={categoryRef} className="relative shrink-0">
-              <button type="button" aria-expanded={categoryOpen} aria-haspopup="listbox" onClick={() => setCategoryOpen((open) => !open)} className="flex h-10 items-center gap-1 rounded-full px-2.5 text-[12px] font-medium text-zinc-700 hover:bg-zinc-50 sm:px-3.5 sm:text-[13px]"><span className="max-w-[104px] truncate sm:max-w-none">{selected.label}</span><span className="text-zinc-500" aria-hidden="true">▾</span></button>
+              <button type="button" aria-expanded={categoryOpen} aria-haspopup="listbox" onClick={() => setCategoryOpen((open) => !open)} className="flex h-9 items-center gap-1 rounded-full px-2.5 text-[12px] font-semibold text-slate-700 hover:bg-white sm:px-3 sm:text-[13px]"><span className="max-w-[100px] truncate">{selected.label}</span><span className="text-slate-400" aria-hidden="true">▾</span></button>
               <input type="hidden" name="category" value={selected.value} />
-              {categoryOpen && <ul role="listbox" aria-label="সার্চ ক্যাটাগরি" className="absolute left-0 top-[48px] z-[60] w-48 overflow-hidden rounded-2xl border border-zinc-200 bg-white py-1.5 text-[#101828] shadow-xl">{categories.map((category) => <li key={category.value} role="option" aria-selected={selected.value === category.value}><button type="button" onClick={() => { setSelected(category); setCategoryOpen(false); }} className="w-full px-4 py-2.5 text-left text-[13px] hover:bg-orange-50 hover:text-[#e65f00]">{category.label}</button></li>)}</ul>}
+              {categoryOpen && <ul role="listbox" aria-label="সার্চ ক্যাটাগরি" className="absolute left-0 top-[44px] z-[60] w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white py-1.5 text-slate-800 shadow-xl">{categories.map((category) => <li key={category.value} role="option" aria-selected={selected.value === category.value}><button type="button" onClick={() => { setSelected(category); setCategoryOpen(false); }} className="w-full px-4 py-2.5 text-left text-[13px] hover:bg-orange-50 hover:text-orange-700">{category.label}</button></li>)}</ul>}
             </div>
-            <span className="hidden h-5 w-px bg-zinc-200 sm:block" />
-            <input name="q" type="search" placeholder="প্রোডাক্ট, গাড়ি, টুলস খুঁজুন..." aria-label="প্রোডাক্ট, গাড়ি বা টুলস খুঁজুন" className="min-w-0 flex-1 bg-transparent px-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 sm:px-3 sm:text-[14px]" />
-            <button type="submit" aria-label="খুঁজুন" className="flex h-9 shrink-0 items-center gap-2 rounded-full bg-[#0645a5] px-3.5 text-[13px] font-semibold text-white transition hover:bg-[#07377e] sm:px-5"><SearchIcon /><span className="hidden sm:inline">খুঁজুন</span></button>
+            <span className="hidden h-5 w-px bg-slate-200 sm:block" />
+            <input name="q" type="search" placeholder="পণ্য, টুলস বা সার্ভিস খুঁজুন..." aria-label="খুঁজুন" className="min-w-0 flex-1 bg-transparent px-2 text-[13px] text-slate-800 outline-none placeholder:text-slate-400 sm:px-3 sm:text-sm" />
+            <button type="submit" aria-label="খুঁজুন" className="flex h-9 shrink-0 items-center gap-2 rounded-full bg-[#1246a0] px-3.5 text-[13px] font-bold text-white transition hover:bg-[#0b3478] sm:px-5"><SearchIcon /><span className="hidden sm:inline">খুঁজুন</span></button>
           </form>
-          <div className="ml-auto flex shrink-0 items-center gap-2.5">
-            <Link href="/cart" aria-label="শপিং কার্ট" className="relative grid h-11 w-11 place-items-center rounded-xl bg-[#101828] text-white transition hover:bg-[#263247]"><CartIcon /><span className="absolute -right-1.5 -top-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[#ff6b00] px-1 text-[10px] font-bold text-white">0</span></Link>
-            <button type="button" aria-label={menuOpen ? "মেনু বন্ধ করুন" : "মেনু খুলুন"} aria-expanded={menuOpen} aria-controls="hubinbd-menu" onClick={() => setMenuOpen((open) => !open)} className="grid h-11 w-11 place-items-center rounded-xl bg-[#101828] text-white transition hover:bg-[#263247]"><MenuIcon open={menuOpen} /></button>
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <Link href="/cart" aria-label="শপিং কার্ট" className="relative grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-800 transition hover:border-orange-300 hover:text-orange-600"><CartIcon /><span className="absolute -right-1 -top-1 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white">0</span></Link>
+            <button type="button" aria-label={menuOpen ? "মেনু বন্ধ করুন" : "মেনু খুলুন"} aria-expanded={menuOpen} aria-controls="hubinbd-menu" onClick={() => setMenuOpen((open) => !open)} className="grid h-10 w-10 place-items-center rounded-xl bg-slate-900 text-white transition hover:bg-slate-700"><MenuIcon open={menuOpen} /></button>
           </div>
         </div>
       </div>
-      <nav aria-label="প্রধান নেভিগেশন" className="border-t border-zinc-200/80">
-        <div className="mx-auto flex max-w-[1280px] items-center gap-1 overflow-x-auto px-3 py-1.5 sm:px-4">
-          {navLinks.map((item) => <Link key={item.href} href={item.href} className="shrink-0 rounded-lg px-3 py-2 text-[12px] font-semibold text-zinc-700 transition hover:bg-white hover:text-[#ff6b00] sm:px-3.5 sm:text-[13px]">{item.label}</Link>)}
+      <nav aria-label="প্রধান নেভিগেশন" className="border-t border-slate-100">
+        <div className="mx-auto flex max-w-[1320px] items-center gap-1 overflow-x-auto px-3 py-1.5 sm:px-5">
+          {navLinks.map((item) => <Link key={item.href} href={item.href} className="shrink-0 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 transition hover:bg-orange-50 hover:text-orange-700 sm:px-3.5 sm:text-[13px]">{item.label}</Link>)}
         </div>
       </nav>
-      {menuOpen && <nav id="hubinbd-menu" aria-label="মোবাইল ও অতিরিক্ত মেনু" className="border-t border-zinc-200 bg-white px-4 py-3 shadow-lg"><div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3"><Link href="/login" onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm font-semibold text-[#101828] hover:bg-orange-50 hover:text-[#ff6b00]">লগইন / সাইন আপ</Link>{navLinks.map((item) => <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm text-zinc-700 hover:bg-orange-50 hover:text-[#ff6b00]">{item.label}</Link>)}<a href="https://cars.hubinbd.com/" className="rounded-xl px-4 py-3 text-sm font-semibold text-[#ff6b00] hover:bg-orange-50">রেন্ট-এ-কার বুকিং ↗</a></div></nav>}
+      {menuOpen && <nav id="hubinbd-menu" aria-label="অতিরিক্ত মেনু" className="border-t border-slate-100 bg-white px-4 py-3 shadow-lg"><div className="mx-auto grid max-w-[1320px] grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3"><Link href="/login" onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm font-bold text-slate-800 hover:bg-orange-50 hover:text-orange-700">লগইন / সাইন আপ</Link>{navLinks.map((item) => <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm text-slate-700 hover:bg-orange-50 hover:text-orange-700">{item.label}</Link>)}<a href="https://cars.hubinbd.com/" target="_blank" rel="noreferrer" className="rounded-xl px-4 py-3 text-sm font-bold text-orange-700 hover:bg-orange-50">রেন্ট-এ-কার বুকিং ↗</a></div></nav>}
     </header>
   );
 }
