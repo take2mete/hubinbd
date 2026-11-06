@@ -5,27 +5,25 @@ import SiteFooter from "@/components/site-footer";
 import MarketplaceProducts from "@/components/marketplace-products";
 
 export const metadata: Metadata = {
-  title: "শীতের জামা",
-  description: "শীতের পোশাকের কালেকশন দেখুন HubinBD-তে।",
+  title: "Clothing | পোশাকের কালেকশন",
+  description: "ছেলেদের, মেয়েদের, বাচ্চাদের ও শীতের পোশাকের নতুন কালেকশন দেখুন HubinBD-তে।",
   alternates: { canonical: "/clothing" },
 };
 
 export default function ClothingPage() {
-  return (
-    <>
-      <SiteHeader />
-      <main className="min-h-screen bg-[#f5f6f8] px-3 py-8 sm:px-5 sm:py-12">
-        <div className="mx-auto max-w-[1280px]">
-          <Link href="/" className="text-sm font-medium text-zinc-500 hover:text-orange-600">← হোমে ফিরুন</Link>
-          <header className="mb-9 mt-5 rounded-3xl bg-gradient-to-r from-[#172033] to-[#34445f] p-7 text-white sm:p-10">
-            <p className="text-xs font-bold tracking-[.2em] text-orange-300">HUBINBD COLLECTION</p>
-            <h1 className="mt-3 text-3xl font-black sm:text-4xl">পোশাকের কালেকশন</h1>
-            <p className="mt-2 max-w-2xl text-sm text-white/75">শীতের জন্য পছন্দের পোশাক এক জায়গায় খুঁজে নিন।</p>
-          </header>
-          <MarketplaceProducts onlyCategory="winter" />
-        </div>
-      </main>
-      <SiteFooter />
-    </>
-  );
+  return <>
+    <SiteHeader />
+    <main className="min-h-screen bg-[#f5f6f8] px-3 py-8 sm:px-5 sm:py-12">
+      <div className="mx-auto max-w-[1280px]">
+        <Link href="/" className="text-sm font-medium text-zinc-500 hover:text-orange-600">← হোমে ফিরুন</Link>
+        <header className="mb-9 mt-5 rounded-3xl bg-gradient-to-r from-[#172033] to-[#34445f] p-7 text-white sm:p-10">
+          <p className="text-xs font-bold tracking-[.2em] text-orange-300">HUBINBD CLOTHING</p>
+          <h1 className="mt-3 text-3xl font-black sm:text-4xl">Clothing | পোশাকের কালেকশন</h1>
+          <p className="mt-2 max-w-2xl text-sm text-white/75">ছেলেদের, মেয়েদের, বাচ্চাদের ও শীতের সব পোশাক এক জায়গায় খুঁজে নিন।</p>
+        </header>
+        <MarketplaceProducts mode="clothing" />
+      </div>
+    </main>
+    <SiteFooter />
+  </>;
 }
