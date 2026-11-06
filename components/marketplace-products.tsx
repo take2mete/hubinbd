@@ -80,7 +80,7 @@ export default function MarketplaceProducts({ mode = "clothing" }: { mode?: "hom
   if (mode === "home") {
     const firstRow = clothingProducts.slice(0, 6);
     const secondRow = topSelling.slice(0, 6);
-    const thirdRow = topSelling.length > 6 ? topSelling.slice(6, 12) : topSelling.slice(0, 6);
+    const thirdRow = topSelling.slice(6, 12);
     return <div className="space-y-10 sm:space-y-12">
       <ProductSection title="নতুন পোশাক" subtitle="Clothing পেজে সদ্য যোগ করা পণ্য" products={firstRow} href="/clothing" />
       <ProductSection title="টপ সেলিং প্রোডাক্ট" subtitle="সবচেয়ে বেশি বিক্রি হওয়া পোশাক" products={secondRow} href="/clothing" />
