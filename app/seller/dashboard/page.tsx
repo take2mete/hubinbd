@@ -1,179 +1,57 @@
 "use client";
-
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback,useEffect,useMemo,useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-
-type Seller = { user_id: string; business_name: string; phone: string; status: string };
-type Order = { id: string; order_no: string; customer_name: string; phone: string; address: string; product_name: string; amount: number; status: string; hub: string; created_at: string };
-type Product = { id: number; name: string; category: string; price: number; stock: number; sku: string | null; status: string; sold: string | number | null };
-type Payout = { id: string; method: string; amount: number; account_number: string; status: string; created_at: string };
-type Voucher = { id: string; code: string; discount: string; active: boolean };
-
-const tabs = ["ড্যাশবোর্ড", "প্রোডাক্ট", "অর্ডার", "প্রমোশন", "ফাইন্যান্স"];
-const money = (n: number) => new Intl.NumberFormat("bn-BD").format(Number(n || 0));
-
-export default function SellerDashboard() {
-  const router = useRouter();
-  const [userId, setUserId] = useState("");
-  const [seller, setSeller] = useState<Seller | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [payouts, setPayouts] = useState<Payout[]>([]);
-  const [vouchers, setVouchers] = useState<Voucher[]>([]);
-  const [tab, setTab] = useState("ড্যাশবোর্ড");
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState("");
-  const [showProduct, setShowProduct] = useState(false);
-  const [showWithdraw, setShowWithdraw] = useState(false);
-  const [productForm, setProductForm] = useState({ name: "", category: "Clothing", price: "", stock: "", sku: "" });
-  const [withdrawForm, setWithdrawForm] = useState({ method: "বিকাশ", amount: "", account_number: "" });
-  const [voucherForm, setVoucherForm] = useState({ code: "", discount: "" });
-  const [countdown, setCountdown] = useState("");
-
-  const notify = (message: string) => { setNotice(message); window.setTimeout(() => setNotice(""), 3500); };
-
-  const loadDashboard = useCallback(async (uid: string) => {
-    const [sellerRes, orderRes, productRes, payoutRes, voucherRes] = await Promise.all([
-      supabase.from("vendors").select("user_id,business_name,phone,status").eq("user_id", uid).maybeSingle(),
-      supabase.from("orders").select("*").eq("seller_id", uid).order("created_at", { ascending: false }),
-      supabase.from("products").select("id,name,category,price,stock,sku,status,sold").eq("vendor_id", uid).order("created_at", { ascending: false }),
-      supabase.from("payouts").select("*").eq("seller_id", uid).order("created_at", { ascending: false }),
-      supabase.from("vouchers").select("id,code,discount,active").eq("seller_id", uid).order("created_at", { ascending: false }),
-    ]);
-    if (sellerRes.error) throw sellerRes.error;
-    if (!sellerRes.data || sellerRes.data.status !== "approved") {
-      router.replace("/seller/login?notice=approval_required");
-      return false;
-    }
-    if (orderRes.error) throw orderRes.error;
-    if (productRes.error) throw productRes.error;
-    if (payoutRes.error) throw payoutRes.error;
-    if (voucherRes.error) throw voucherRes.error;
-    setSeller(sellerRes.data as Seller);
-    setOrders((orderRes.data || []) as Order[]);
-    setProducts((productRes.data || []) as Product[]);
-    setPayouts((payoutRes.data || []) as Payout[]);
-    setVouchers((voucherRes.data || []) as Voucher[]);
-    return true;
-  }, [router]);
-
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (!active) return;
-      if (error || !user) { router.replace("/seller/login"); return; }
-      setUserId(user.id);
-      try { await loadDashboard(user.id); }
-      catch (e) { console.error("Seller dashboard load failed:", e); if (active) notify("ড্যাশবোর্ডের তথ্য লোড করা যায়নি। অনুমতি ও ডেটাবেস সংযোগ পরীক্ষা করুন।"); }
-      finally { if (active) setLoading(false); }
-    })();
-    return () => { active = false; };
-  }, [loadDashboard, router]);
-
-  useEffect(() => {
-    const target = new Date("2026-11-11T00:00:00+06:00").getTime();
-    const update = () => {
-      const diff = Math.max(0, target - Date.now());
-      const days = Math.floor(diff / 86400000);
-      const hours = Math.floor((diff % 86400000) / 3600000);
-      const minutes = Math.floor((diff % 3600000) / 60000);
-      const seconds = Math.floor((diff % 60000) / 1000);
-      setCountdown(diff ? `${days} দিন : ${hours} ঘণ্টা : ${minutes} মিনিট : ${seconds} সেকেন্ড` : "11.11 Sale শুরু হয়েছে");
-    };
-    update();
-    const timer = window.setInterval(update, 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const totalSales = useMemo(() => orders.filter(o => ["Shipped", "Delivered"].includes(o.status)).reduce((sum, o) => sum + Number(o.amount || 0), 0), [orders]);
-  const pendingOrders = orders.filter(o => ["Pending", "RTS"].includes(o.status)).length;
-
-  async function updateOrder(orderId: string) {
-    setBusy(true);
-    const { error } = await supabase.from("orders").update({ status: "Shipped" }).eq("id", orderId).eq("seller_id", userId);
-    if (error) notify("অর্ডার আপডেট হয়নি: " + error.message);
-    else { setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: "Shipped" } : o)); notify("অর্ডার Shipped হয়েছে"); }
-    setBusy(false);
-  }
-
-  async function addProduct() {
-    if (!productForm.name.trim() || !productForm.price || Number(productForm.price) <= 0) { notify("পণ্যের নাম ও সঠিক দাম দিন"); return; }
-    setBusy(true);
-    const { data, error } = await supabase.from("products").insert({
-      name: productForm.name.trim(), category: productForm.category, price: Number(productForm.price),
-      stock: Math.max(0, Number(productForm.stock || 0)), sku: productForm.sku.trim() || null,
-      status: "Under Review", sold: "0", vendor_id: userId, is_active: false,
-    }).select("id,name,category,price,stock,sku,status,sold").single();
-    if (error) notify("পণ্য যোগ হয়নি: " + error.message);
-    else { setProducts(prev => [data as Product, ...prev]); setProductForm({ name: "", category: "Clothing", price: "", stock: "", sku: "" }); setShowProduct(false); notify("পণ্য জমা হয়েছে — Under Review"); }
-    setBusy(false);
-  }
-
-  async function deleteProduct(id: number) {
-    if (!window.confirm("এই পণ্যটি মুছে ফেলবেন?")) return;
-    const { error } = await supabase.from("products").delete().eq("id", id).eq("vendor_id", userId);
-    if (error) notify("পণ্য ডিলিট হয়নি: " + error.message);
-    else { setProducts(prev => prev.filter(p => p.id !== id)); notify("পণ্য মুছে ফেলা হয়েছে"); }
-  }
-
-  async function requestPayout() {
-    const amount = Number(withdrawForm.amount);
-    if (!Number.isFinite(amount) || amount <= 0 || !withdrawForm.account_number.trim()) { notify("সঠিক পরিমাণ ও অ্যাকাউন্ট নম্বর দিন"); return; }
-    setBusy(true);
-    const { data, error } = await supabase.from("payouts").insert({
-      seller_id: userId, method: withdrawForm.method, amount, account_number: withdrawForm.account_number.trim(), status: "Pending",
-    }).select("*").single();
-    if (error) notify("উত্তোলন অনুরোধ জমা হয়নি: " + error.message);
-    else { setPayouts(prev => [data as Payout, ...prev]); setShowWithdraw(false); setWithdrawForm({ method: "বিকাশ", amount: "", account_number: "" }); notify("উত্তোলন অনুরোধ Pending হয়েছে"); }
-    setBusy(false);
-  }
-
-  async function createVoucher() {
-    if (!voucherForm.code.trim() || !voucherForm.discount.trim()) { notify("ভাউচার কোড ও ছাড় লিখুন"); return; }
-    setBusy(true);
-    const { data, error } = await supabase.from("vouchers").insert({
-      seller_id: userId, code: voucherForm.code.trim().toUpperCase(), discount: voucherForm.discount.trim(), active: true,
-    }).select("id,code,discount,active").single();
-    if (error) notify("ভাউচার তৈরি হয়নি: " + error.message);
-    else { setVouchers(prev => [data as Voucher, ...prev]); setVoucherForm({ code: "", discount: "" }); notify("ভাউচার তৈরি হয়েছে"); }
-    setBusy(false);
-  }
-
-  async function signOut() { await supabase.auth.signOut(); router.replace("/seller/login"); }
-
-  if (loading) return <div className="min-h-screen grid place-items-center bg-slate-100 text-slate-600">সেলার ড্যাশবোর্ড লোড হচ্ছে…</div>;
-  if (!seller) return <div className="min-h-screen grid place-items-center bg-slate-100 text-slate-600">সেলার অ্যাকাউন্ট যাচাই করা হচ্ছে…</div>;
-
-  return <div className="min-h-screen bg-[#F2F4F7] text-slate-900">
-    <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 bg-[#0F172A] px-4 py-3 text-white shadow">
-      <div><div className="font-black">HubinBD <span className="rounded-full bg-orange-500 px-2 py-0.5 text-xs">Seller Center</span></div><div className="text-xs text-slate-300">{seller.business_name} · {seller.phone || "ফোন যোগ করা নেই"}</div></div>
-      <div className="flex items-center gap-2"><span className="hidden text-xs text-slate-300 sm:inline">Seller ID: {seller.user_id.slice(0, 8).toUpperCase()}</span><button onClick={signOut} className="rounded-full bg-white/10 px-4 py-2 text-sm">লগআউট</button></div>
-    </header>
-    <div className="mx-auto max-w-7xl p-3 md:p-6">
-      <nav className="mb-4 flex gap-2 overflow-x-auto">{tabs.map(t => <button key={t} onClick={() => setTab(t)} className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold ${tab === t ? "bg-[#0E7490] text-white" : "bg-white text-slate-700"}`}>{t}</button>)}</nav>
-
-      {tab === "ড্যাশবোর্ড" && <><div className="rounded-2xl bg-gradient-to-r from-[#0E7490] to-[#0F172A] p-5 text-white"><h1 className="text-2xl font-black">স্বাগতম, {seller.business_name} 👋</h1><p className="mt-2 text-sm">11.11 Mega Sale শুরু হতে: {countdown}</p></div>
-        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">{[{label:"মোট বিক্রি",value:"৳"+money(totalSales)},{label:"মোট অর্ডার",value:orders.length+"টি"},{label:"পণ্য",value:products.length+"টি"},{label:"পেন্ডিং অর্ডার",value:pendingOrders+"টি"}].map(x=><div key={x.label} className="rounded-2xl bg-white p-4 shadow-sm"><div className="text-xs text-slate-500">{x.label}</div><div className="mt-1 text-2xl font-black">{x.value}</div></div>)}</div>
-        <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm"><h2 className="font-black">সাম্প্রতিক অর্ডার</h2>{orders.slice(0,5).map(o=><div key={o.id} className="flex flex-wrap justify-between gap-2 border-b py-3 text-sm last:border-0"><span>{o.order_no} · {o.product_name} · {o.customer_name}</span><b>{o.status} · ৳{money(o.amount)}</b></div>)}{!orders.length&&<p className="py-5 text-sm text-slate-500">এখনো কোনো অর্ডার নেই।</p>}</div>
-      </>}
-
-      {tab === "অর্ডার" && <section className="rounded-2xl bg-white p-4 shadow-sm"><h2 className="mb-3 text-xl font-black">অর্ডার ম্যানেজমেন্ট</h2>{orders.map(o=><div key={o.id} className="flex flex-wrap items-center justify-between gap-3 border-b py-4 last:border-0"><div><b>{o.order_no} · {o.product_name}</b><p className="text-sm text-slate-500">{o.customer_name} · {o.phone} · {o.address}</p><p className="text-sm">৳{money(o.amount)} · {o.hub} · {new Date(o.created_at).toLocaleDateString("bn-BD")}</p></div><div className="flex items-center gap-2"><span className="rounded-full bg-slate-100 px-3 py-1 text-xs">{o.status}</span>{["RTS","Ready To Ship"].includes(o.status)&&<button disabled={busy} onClick={()=>updateOrder(o.id)} className="rounded-full bg-[#0E7490] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">RTS → Shipped</button>}</div></div>)}{!orders.length&&<p className="py-5 text-sm text-slate-500">কোনো অর্ডার পাওয়া যায়নি।</p>}</section>}
-
-      {tab === "প্রোডাক্ট" && <section className="rounded-2xl bg-white p-4 shadow-sm"><div className="mb-3 flex items-center justify-between"><h2 className="text-xl font-black">আমার পণ্য</h2><button onClick={()=>setShowProduct(true)} className="rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white">+ Add Product</button></div>{products.map(p=><div key={p.id} className="flex flex-wrap items-center justify-between gap-3 border-b py-3 last:border-0"><div><b>{p.name}</b><p className="text-sm text-slate-500">{p.category} · SKU: {p.sku||"—"} · বিক্রি: {p.sold||0}</p></div><div className="flex items-center gap-3 text-sm"><span>৳{money(p.price)} · স্টক {p.stock} · {p.status||"—"}</span><button onClick={()=>deleteProduct(p.id)} className="font-bold text-red-600">Delete</button></div></div>)}{!products.length&&<p className="py-5 text-sm text-slate-500">এখনো কোনো পণ্য নেই।</p>}</section>}
-
-      {tab === "প্রমোশন" && <section className="rounded-2xl bg-white p-4 shadow-sm"><h2 className="mb-3 text-xl font-black">ভাউচার</h2><div className="flex flex-wrap gap-2"><input value={voucherForm.code} onChange={e=>setVoucherForm({...voucherForm,code:e.target.value})} placeholder="Voucher code" className="rounded-xl border px-3 py-2"/><input value={voucherForm.discount} onChange={e=>setVoucherForm({...voucherForm,discount:e.target.value})} placeholder="Discount (e.g. 10%)" className="rounded-xl border px-3 py-2"/><button disabled={busy} onClick={createVoucher} className="rounded-xl bg-[#0E7490] px-4 py-2 font-bold text-white">তৈরি করুন</button></div>{vouchers.map(v=><div key={v.id} className="border-b py-3 text-sm">{v.code} · {v.discount} · {v.active?"Active":"Inactive"}</div>)}</section>}
-
-      {tab === "ফাইন্যান্স" && <section className="rounded-2xl bg-white p-4 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-xl font-black">পেআউট / ফাইন্যান্স</h2><button onClick={()=>setShowWithdraw(true)} className="rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white">Withdraw</button></div>{payouts.map(p=><div key={p.id} className="flex flex-wrap justify-between gap-2 border-b py-3 text-sm"><span>{p.method} · {p.account_number} · {new Date(p.created_at).toLocaleDateString("bn-BD")}</span><b>৳{money(p.amount)} · {p.status}</b></div>)}{!payouts.length&&<p className="py-5 text-sm text-slate-500">এখনো কোনো উত্তোলন অনুরোধ নেই।</p>}</section>}
-    </div>
-
-    {showProduct&&<div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4"><div className="w-full max-w-md rounded-2xl bg-white p-5"><h3 className="mb-3 text-lg font-black">নতুন পণ্য যোগ করুন</h3><input value={productForm.name} onChange={e=>setProductForm({...productForm,name:e.target.value})} placeholder="পণ্যের নাম" className="mb-2 w-full rounded-xl border p-3"/><select value={productForm.category} onChange={e=>setProductForm({...productForm,category:e.target.value})} className="mb-2 w-full rounded-xl border p-3"><option>Clothing</option><option>Tools</option><option>Computer Work</option></select><input type="number" min="1" value={productForm.price} onChange={e=>setProductForm({...productForm,price:e.target.value})} placeholder="দাম" className="mb-2 w-full rounded-xl border p-3"/><input type="number" min="0" value={productForm.stock} onChange={e=>setProductForm({...productForm,stock:e.target.value})} placeholder="স্টক" className="mb-2 w-full rounded-xl border p-3"/><input value={productForm.sku} onChange={e=>setProductForm({...productForm,sku:e.target.value})} placeholder="SKU (ঐচ্ছিক)" className="mb-3 w-full rounded-xl border p-3"/><div className="flex gap-2"><button disabled={busy} onClick={addProduct} className="flex-1 rounded-xl bg-[#0E7490] p-3 font-bold text-white">সাবমিট · Under Review</button><button onClick={()=>setShowProduct(false)} className="rounded-xl bg-slate-200 px-4">বন্ধ</button></div></div></div>}
-
-    {showWithdraw&&<div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4"><div className="w-full max-w-md rounded-2xl bg-white p-5"><h3 className="mb-3 text-lg font-black">Withdraw Request</h3><select value={withdrawForm.method} onChange={e=>setWithdrawForm({...withdrawForm,method:e.target.value})} className="mb-2 w-full rounded-xl border p-3"><option>বিকাশ</option><option>নগদ</option><option>ব্যাংক</option></select><input type="number" min="1" value={withdrawForm.amount} onChange={e=>setWithdrawForm({...withdrawForm,amount:e.target.value})} placeholder="পরিমাণ" className="mb-2 w-full rounded-xl border p-3"/><input value={withdrawForm.account_number} onChange={e=>setWithdrawForm({...withdrawForm,account_number:e.target.value})} placeholder="অ্যাকাউন্ট নম্বর" className="mb-3 w-full rounded-xl border p-3"/><div className="flex gap-2"><button disabled={busy} onClick={requestPayout} className="flex-1 rounded-xl bg-orange-500 p-3 font-bold text-white">রিকোয়েস্ট পাঠান</button><button onClick={()=>setShowWithdraw(false)} className="rounded-xl bg-slate-200 px-4">বন্ধ</button></div></div></div>}
-
-    {notice&&<div role="status" className="fixed bottom-5 left-1/2 z-[60] -translate-x-1/2 rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-xl">{notice}</div>}
-    <footer className="py-5 text-center text-xs text-slate-400">HubinBD Seller Center · Live Supabase Data</footer>
-  </div>;
+type Seller={user_id:string;business_name:string;phone:string;status:string};
+type Order={id:string;order_no:string;customer_name:string;phone:string;address:string;product_name:string;amount:number;status:string;hub:string;created_at:string};
+type Product={id:number;name:string;category:string;price:number;stock:number;sku:string|null;status:string;sold:string|number|null};
+type Payout={id:string;method:string;amount:number;account_number:string;status:string;created_at:string};
+type Voucher={id:string;code:string;discount:string;active:boolean};
+const groups=[["ওভারভিউ","ড্যাশবোর্ড"],["ক্যাটালগ","প্রোডাক্ট","প্রোডাক্ট যোগ করুন"],["বিক্রি","অর্ডার","প্রমোশন"],["অ্যাকাউন্ট","ফাইন্যান্স","সেটিংস","HubinBD Academy"]];
+const money=(n:number)=>new Intl.NumberFormat("bn-BD").format(Number(n||0));
+export default function SellerDashboard(){
+ const router=useRouter(),[uid,setUid]=useState(""),[seller,setSeller]=useState<Seller|null>(null),[orders,setOrders]=useState<Order[]>([]),[products,setProducts]=useState<Product[]>([]),[payouts,setPayouts]=useState<Payout[]>([]),[vouchers,setVouchers]=useState<Voucher[]>([]);
+ const [tab,setTab]=useState("ড্যাশবোর্ড"),[search,setSearch]=useState(""),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[notice,setNotice]=useState(""),[drawer,setDrawer]=useState(false),[pm,setPm]=useState(false),[wm,setWm]=useState(false),[countdown,setCountdown]=useState("");
+ const [pf,setPf]=useState({name:"",category:"Clothing",price:"",stock:"",sku:""}),[wf,setWf]=useState({method:"বিকাশ",amount:"",account_number:""}),[vf,setVf]=useState({code:"",discount:""});
+ const toast=(s:string)=>{setNotice(s);window.setTimeout(()=>setNotice(""),3500)};
+ const load=useCallback(async(id:string)=>{const [s,o,p,w,v]=await Promise.all([
+  supabase.from("vendors").select("user_id,business_name,phone,status").eq("user_id",id).maybeSingle(),
+  supabase.from("orders").select("*").eq("seller_id",id).order("created_at",{ascending:false}),
+  supabase.from("products").select("id,name,category,price,stock,sku,status,sold").eq("vendor_id",id).order("created_at",{ascending:false}),
+  supabase.from("payouts").select("*").eq("seller_id",id).order("created_at",{ascending:false}),
+  supabase.from("vouchers").select("id,code,discount,active").eq("seller_id",id).order("created_at",{ascending:false})]);
+  if(s.error)throw s.error;if(!s.data||s.data.status!=="approved"){router.replace("/seller/login?notice=approval_required");return}
+  for(const x of [o,p,w,v])if(x.error)throw x.error;setSeller(s.data as Seller);setOrders((o.data||[]) as Order[]);setProducts((p.data||[]) as Product[]);setPayouts((w.data||[]) as Payout[]);setVouchers((v.data||[]) as Voucher[]);
+ },[router]);
+ useEffect(()=>{let live=true;(async()=>{const {data:{user},error}=await supabase.auth.getUser();if(!live)return;if(error||!user){router.replace("/seller/login");return}setUid(user.id);try{await load(user.id)}catch(e){console.error(e);toast("ডেটা লোড হয়নি: Supabase permission/schema পরীক্ষা করুন")}finally{if(live)setLoading(false)}})();const {data:a}=supabase.auth.onAuthStateChange((_e,s)=>{if(!s)router.replace("/seller/login")});return()=>{live=false;a.subscription.unsubscribe()}},[load,router]);
+ useEffect(()=>{const end=new Date("2026-11-11T00:00:00+06:00").getTime();const tick=()=>{let d=Math.max(0,end-Date.now());setCountdown(d?Math.floor(d/86400000)+" দিন : "+Math.floor(d%86400000/3600000)+" ঘণ্টা : "+Math.floor(d%3600000/60000)+" মিনিট : "+Math.floor(d%60000/1000)+" সেকেন্ড":"11.11 Sale শুরু হয়েছে")};tick();const t=setInterval(tick,1000);return()=>clearInterval(t)},[]);
+ const sales=useMemo(()=>orders.filter(o=>["Shipped","Delivered"].includes(o.status)).reduce((s,o)=>s+Number(o.amount||0),0),[orders]),pending=orders.filter(o=>["Pending","RTS","Ready To Ship"].includes(o.status)).length;
+ const fo=orders.filter(o=>[o.order_no,o.customer_name,o.product_name,o.phone].some(x=>(x||"").toLowerCase().includes(search.toLowerCase()))),fp=products.filter(p=>[p.name,p.sku||"",p.category].some(x=>(x||"").toLowerCase().includes(search.toLowerCase())));
+ async function ship(id:string){setBusy(true);const {error}=await supabase.from("orders").update({status:"Shipped"}).eq("id",id).eq("seller_id",uid);if(error)toast(error.message);else{setOrders(a=>a.map(o=>o.id===id?{...o,status:"Shipped"}:o));toast("অর্ডার Shipped হয়েছে")}setBusy(false)}
+ async function addProduct(){if(!pf.name.trim()||!(Number(pf.price)>0))return toast("পণ্যের নাম ও সঠিক দাম দিন");setBusy(true);const {data,error}=await supabase.from("products").insert({name:pf.name.trim(),category:pf.category,price:Number(pf.price),stock:Number(pf.stock||0),sku:pf.sku||null,status:"Under Review",sold:"0",vendor_id:uid,is_active:false}).select("id,name,category,price,stock,sku,status,sold").single();if(error)toast(error.message);else{setProducts(a=>[data as Product,...a]);setPf({name:"",category:"Clothing",price:"",stock:"",sku:""});setPm(false);toast("পণ্য Under Review-এ জমা হয়েছে")}setBusy(false)}
+ async function del(id:number){if(!confirm("পণ্যটি মুছে ফেলবেন?"))return;const {error}=await supabase.from("products").delete().eq("id",id).eq("vendor_id",uid);if(error)toast(error.message);else setProducts(a=>a.filter(p=>p.id!==id))}
+ async function withdraw(){setBusy(true);const {data,error}=await supabase.from("payouts").insert({seller_id:uid,method:wf.method,amount:Number(wf.amount),account_number:wf.account_number,status:"Pending"}).select("*").single();if(error)toast(error.message);else{setPayouts(a=>[data as Payout,...a]);setWm(false);toast("উত্তোলন অনুরোধ Pending হয়েছে")}setBusy(false)}
+ async function voucher(){setBusy(true);const {data,error}=await supabase.from("vouchers").insert({seller_id:uid,code:vf.code.toUpperCase(),discount:vf.discount,active:true}).select("id,code,discount,active").single();if(error)toast(error.message);else{setVouchers(a=>[data as Voucher,...a]);setVf({code:"",discount:""});toast("ভাউচার তৈরি হয়েছে")}setBusy(false)}
+ async function logout(){await supabase.auth.signOut();router.replace("/seller/login")}
+ const sidebar=<div className="flex h-full flex-col bg-white"><div className="flex items-center gap-3 border-b px-4 py-4"><span className="grid h-10 w-10 place-items-center rounded-lg bg-[#0E7490] text-xl font-black text-white">H</span><div><b className="block text-lg">Hubin<span className="text-[#F97316]">BD</span></b><small className="font-bold tracking-widest text-slate-500">SELLER CENTER</small></div></div><div className="flex-1 overflow-y-auto px-3 py-4">{groups.map(g=><div className="mb-5" key={g[0]}><p className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400">{g[0]}</p>{g.slice(1).map(x=><button key={x} onClick={()=>{setTab(x==="প্রোডাক্ট যোগ করুন"?"প্রোডাক্ট":x);setDrawer(false);if(x==="প্রোডাক্ট যোগ করুন")setPm(true)}} className={"mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm "+(tab===x?"border-r-4 border-[#0E7490] bg-cyan-50 font-bold text-[#0E7490]":"text-slate-700 hover:bg-slate-50")}><span className="w-5">{({"ড্যাশবোর্ড":"▦","প্রোডাক্ট":"◇","প্রোডাক্ট যোগ করুন":"+","অর্ডার":"▤","প্রমোশন":"◈","ফাইন্যান্স":"৳","সেটিংস":"⚙","HubinBD Academy":"▣"} as Record<string,string>)[x]}</span>{x}</button>)}</div>)}</div><div className="m-3 rounded-xl bg-cyan-50 p-3"><b className="text-sm text-[#0E7490]">Seller Account</b><p className="mt-1 text-xs text-slate-600">{seller?.business_name}</p><small className="text-slate-500">Status: {seller?.status}</small></div></div>;
+ if(loading)return <div className="grid min-h-screen place-items-center bg-[#F5F7FA]">সেলার ড্যাশবোর্ড লোড হচ্ছে…</div>;if(!seller)return <div className="grid min-h-screen place-items-center bg-[#F5F7FA]">সেলার যাচাই হচ্ছে…</div>;
+ return <div className="min-h-screen bg-[#F5F7FA] text-slate-800"><div className="mx-auto flex max-w-[1500px] items-start lg:gap-4 lg:px-3 lg:py-3"><aside className="sticky top-3 hidden h-[calc(100vh-24px)] w-[260px] shrink-0 overflow-hidden rounded-xl border bg-white lg:block">{sidebar}</aside><div className="min-w-0 flex-1 pb-24 lg:pb-6">
+ <header className="sticky top-0 z-40 bg-[#0F172A] text-white shadow-md"><div className="flex items-center gap-2 px-3 py-2.5 sm:px-4"><button onClick={()=>setDrawer(true)} className="grid h-10 w-10 place-items-center lg:hidden">☰</button><div className="flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-md bg-[#0E7490] text-xl font-black">H</span><div><b className="block text-lg">Hubin<span className="text-[#F97316]">BD</span></b><small className="text-slate-300">SELLER CENTER</small></div></div><div className="ml-2 hidden md:block"><b className="block text-sm">{seller.business_name}</b><small className="text-slate-300">Seller ID: {uid.slice(0,8).toUpperCase()}</small></div><label className="mx-auto hidden w-full max-w-md items-center gap-2 rounded-full bg-white px-4 py-2 text-slate-700 md:flex">⌕<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="অর্ডার, প্রোডাক্ট বা SKU খুঁজুন..." className="w-full bg-transparent text-sm outline-none"/></label><div className="ml-auto flex items-center gap-2"><button onClick={()=>toast("নতুন কোনো ঘোষণা নেই")} className="h-10 w-10 rounded-full hover:bg-white/10">♧</button><button onClick={()=>toast("কাস্টমার চ্যাট এখনো সংযুক্ত নয়")} className="h-10 w-10 rounded-full hover:bg-white/10">◌</button><button onClick={logout} className="rounded-full bg-white/10 px-3 py-2 text-xs font-bold">লগআউট</button></div></div><div className="hidden items-center gap-5 border-t border-white/10 px-4 py-2 text-[11px] text-slate-300 lg:flex"><span>স্টোর: <b className="text-white">{seller.business_name}</b></span><span>Seller ID: <b className="text-white">{uid.slice(0,8).toUpperCase()}</b></span><span className="text-amber-300">✓ Seller verified</span><a href="https://www.hubinbd.com/" className="ml-auto font-bold text-white">HubinBD হোমে যান ↗</a></div></header>
+ <main className="px-3 py-4 sm:px-4">
+ {tab==="ড্যাশবোর্ড"&&<div className="space-y-4"><section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0E7490] to-[#0F172A] text-white shadow-sm"><div className="flex flex-col gap-4 p-5 sm:p-6 md:flex-row md:items-center md:justify-between"><div><span className="rounded-full bg-white/20 px-3 py-1 text-xs font-bold">HubinBD Seller Center</span><h1 className="mt-3 text-2xl font-bold sm:text-3xl">স্বাগতম, {seller.business_name}</h1><p className="mt-2 text-sm text-white/90">আপনার স্টোর, অর্ডার ও বিক্রির কার্যক্রম এক জায়গা থেকে পরিচালনা করুন।</p><div className="mt-4 flex gap-2"><button onClick={()=>{setTab("প্রোডাক্ট");setPm(true)}} className="rounded-full bg-[#F97316] px-4 py-2.5 text-sm font-bold">+ প্রোডাক্ট যোগ করুন</button><button onClick={()=>setTab("অর্ডার")} className="rounded-full border border-white/50 px-4 py-2.5 text-sm font-bold">অর্ডার দেখুন</button></div></div><div className="rounded-2xl bg-black/15 p-4 text-center"><p className="text-xs font-bold">১১.১১ শুরু হতে বাকি</p><p className="mt-3 text-lg font-black">{countdown}</p><small className="text-white/80">লাইভ কাউন্টডাউন</small></div></div></section>
+ <section className="rounded-2xl border bg-white p-4"><b>◉ To-Do / Pending Tasks</b><div className="mt-3 grid gap-2 md:grid-cols-3"><button onClick={()=>setTab("অর্ডার")} className="flex items-center gap-3 rounded-xl bg-cyan-50 p-3 text-left"><span className="text-2xl">📦</span><span><b className="block">{pending}টি অর্ডার প্রসেস করতে হবে</b><small className="text-slate-500">Pending / Ready to Ship</small></span>›</button><button onClick={()=>setTab("প্রোডাক্ট")} className="flex items-center gap-3 rounded-xl bg-rose-50 p-3 text-left"><span className="text-2xl">⚠️</span><span><b className="block">{products.filter(p=>p.status==="Under Review").length}টি পণ্য রিভিউতে</b><small className="text-slate-500">অনুমোদনের অবস্থা দেখুন</small></span>›</button><button onClick={()=>setTab("ফাইন্যান্স")} className="flex items-center gap-3 rounded-xl bg-amber-50 p-3 text-left"><span className="text-2xl">↩️</span><span><b className="block">{payouts.filter(p=>p.status==="Pending").length}টি পেআউট অপেক্ষমাণ</b><small className="text-slate-500">উত্তোলনের অনুরোধ</small></span>›</button></div></section>
+ <section className="grid gap-4 lg:grid-cols-[1.1fr_1.6fr]"><div className="rounded-2xl border bg-white p-4"><div className="flex justify-between"><div><b>Seller Performance Score</b><p className="mt-1 text-xs text-slate-500">আপনার বাস্তব অ্যাকাউন্ট ডেটা</p></div><span className="text-sm font-bold text-[#0E7490]">Live</span></div><div className="mt-4 grid grid-cols-2 gap-3">{[["মোট অর্ডার",orders.length],["শিপড / ডেলিভার্ড",orders.filter(o=>["Shipped","Delivered"].includes(o.status)).length],["পণ্যের সংখ্যা",products.length],["পেন্ডিং অর্ডার",pending]].map(x=><div key={String(x[0])} className="rounded-xl bg-slate-50 p-3"><small className="text-slate-500">{x[0]}</small><b className="mt-1 block text-2xl">{money(Number(x[1]))}</b></div>)}</div><div className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">স্টোর স্ট্যাটাস: {seller.status}</div></div><div className="rounded-2xl border bg-white p-4"><div className="flex justify-between"><div><b>Sales Overview</b><p className="mt-1 text-xs text-slate-500">অর্ডার ও বিক্রির সারাংশ • লাইভ ডেটা</p></div><span className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-bold text-[#0E7490]">Supabase Live</span></div><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">{[["মোট বিক্রি","৳"+money(sales)],["মোট অর্ডার",money(orders.length)],["গড় অর্ডার","৳"+money(orders.length?Math.round(sales/orders.length):0)]].map(x=><div key={x[0]} className="rounded-xl bg-slate-50 p-3"><small className="text-slate-500">{x[0]}</small><b className="mt-1 block text-2xl">{x[1]}</b></div>)}</div><div className="mt-4 grid h-24 grid-cols-3 items-end gap-2 border-b pb-2"><div className="grid h-full place-items-center rounded-t bg-cyan-50 text-xs text-slate-500">{orders.length} অর্ডার</div><div className="grid h-full place-items-center rounded-t bg-orange-50 text-xs text-slate-500">৳{money(sales)}</div><div className="grid h-full place-items-center rounded-t bg-emerald-50 text-xs text-slate-500">{products.length} পণ্য</div></div></div></section>
+ <section className="rounded-2xl border bg-white p-4"><div className="flex justify-between"><b>সাম্প্রতিক অর্ডার</b><button onClick={()=>setTab("অর্ডার")} className="text-sm font-bold text-[#0E7490]">সব দেখুন →</button></div>{orders.slice(0,5).map(o=><div key={o.id} className="flex flex-wrap justify-between gap-2 border-b py-3 text-sm"><span>{o.order_no} · {o.product_name} · {o.customer_name}</span><b>{o.status} · ৳{money(o.amount)}</b></div>)}{!orders.length&&<p className="py-6 text-center text-sm text-slate-500">এখনো কোনো অর্ডার নেই।</p>}</section></div>}
+ {tab==="অর্ডার"&&<section className="rounded-2xl border bg-white p-4"><h1 className="text-2xl font-bold">অর্ডার ম্যানেজমেন্ট</h1><p className="mt-1 text-sm text-slate-500">আপনার স্টোরের সব অর্ডার</p>{fo.map(o=><div key={o.id} className="flex flex-wrap justify-between gap-3 border-b py-4 text-sm"><div><b>{o.order_no} · {o.product_name}</b><p className="text-slate-500">{o.customer_name} · {o.phone} · {o.address}</p><p>৳{money(o.amount)} · {o.hub} · {new Date(o.created_at).toLocaleDateString("bn-BD")}</p></div><div className="flex items-center gap-2"><span>{o.status}</span>{["RTS","Ready To Ship"].includes(o.status)&&<button disabled={busy} onClick={()=>ship(o.id)} className="rounded-full bg-[#0E7490] px-3 py-2 text-xs font-bold text-white">RTS → Shipped</button>}</div></div>)}{!fo.length&&<p className="py-8 text-center text-sm text-slate-500">কোনো অর্ডার পাওয়া যায়নি।</p>}</section>}
+ {tab==="প্রোডাক্ট"&&<section className="rounded-2xl border bg-white p-4"><div className="flex justify-between"><div><h1 className="text-2xl font-bold">Manage Products</h1><p className="text-sm text-slate-500">আপনার পণ্য ও স্টক পরিচালনা করুন</p></div><button onClick={()=>setPm(true)} className="rounded-full bg-[#F97316] px-4 py-2 text-sm font-bold text-white">+ Add Product</button></div>{fp.map(p=><div key={p.id} className="flex flex-wrap justify-between gap-3 border-b py-3 text-sm"><div><b>{p.name}</b><p className="text-slate-500">{p.category} · SKU: {p.sku||"—"} · বিক্রি: {p.sold||0}</p></div><div>৳{money(p.price)} · স্টক {p.stock} · {p.status} <button onClick={()=>del(p.id)} className="ml-3 font-bold text-rose-600">Delete</button></div></div>)}{!fp.length&&<p className="py-8 text-center text-sm text-slate-500">এখনো কোনো পণ্য নেই।</p>}</section>}
+ {tab==="প্রমোশন"&&<section className="rounded-2xl border bg-white p-4"><h1 className="text-2xl font-bold">Marketing Center</h1><p className="text-sm text-slate-500">Voucher / Promotion</p><div className="mt-4 flex flex-wrap gap-2"><input value={vf.code} onChange={e=>setVf({...vf,code:e.target.value})} placeholder="Voucher code" className="rounded-lg border bg-slate-50 px-3 py-2"/><input value={vf.discount} onChange={e=>setVf({...vf,discount:e.target.value})} placeholder="Discount" className="rounded-lg border bg-slate-50 px-3 py-2"/><button disabled={busy} onClick={voucher} className="rounded-lg bg-[#0E7490] px-4 py-2 font-bold text-white">তৈরি করুন</button></div>{vouchers.map(v=><div key={v.id} className="mt-2 rounded-lg bg-slate-50 p-3 text-sm">{v.code} · {v.discount} · {v.active?"Active":"Inactive"}</div>)}</section>}
+ {tab==="ফাইন্যান্স"&&<section className="rounded-2xl border bg-white p-4"><div className="flex justify-between"><h1 className="text-2xl font-bold">Finance & Payouts</h1><button onClick={()=>setWm(true)} className="rounded-full bg-[#F97316] px-4 py-2 font-bold text-white">Withdraw</button></div>{payouts.map(p=><div key={p.id} className="border-b py-3 text-sm">{p.method} · {p.account_number} · ৳{money(p.amount)} · {p.status}</div>)}{!payouts.length&&<p className="py-8 text-center text-slate-500">কোনো উত্তোলন অনুরোধ নেই।</p>}</section>}
+ {tab==="সেটিংস"&&<section className="rounded-2xl border bg-white p-5"><h1 className="text-2xl font-bold">সেটিংস</h1><div className="mt-4 grid gap-3 sm:grid-cols-2"><label>দোকানের নাম<input readOnly value={seller.business_name} className="mt-1 block w-full rounded-lg border bg-slate-50 p-3"/></label><label>ফোন<input readOnly value={seller.phone||""} className="mt-1 block w-full rounded-lg border bg-slate-50 p-3"/></label></div></section>}
+ {tab==="HubinBD Academy"&&<section className="rounded-2xl border bg-white p-5"><h1 className="text-2xl font-bold">HubinBD Academy</h1><div className="mt-4 grid gap-3 md:grid-cols-3">{["নতুন সেলার গাইড","১১.১১-এ বিক্রি বাড়ানোর কৌশল","প্রোডাক্ট ছবি তোলার টিপস"].map(x=><article key={x} className="rounded-xl border bg-slate-50 p-4 font-bold">{x}</article>)}</div></section>}
+ </main><footer className="mx-3 flex flex-col justify-between gap-2 rounded-xl border bg-white px-4 py-3 text-center text-xs text-slate-500 sm:mx-4 sm:flex-row">{seller.business_name} • Seller ID: {uid.slice(0,8).toUpperCase()} • <span className="text-[#F97316]">Supabase Connected</span></footer></div></div>
+ {drawer&&<div className="fixed inset-0 z-50 lg:hidden"><button onClick={()=>setDrawer(false)} className="absolute inset-0 bg-black/50"/><aside className="absolute left-0 top-0 h-full w-[280px] bg-white">{sidebar}</aside></div>}
+ {pm&&<div className="fixed inset-0 z-[60] grid place-items-center bg-black/50 p-4"><div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl"><div className="flex justify-between"><h2 className="text-xl font-bold">নতুন পণ্য যোগ করুন</h2><button onClick={()=>setPm(false)}>×</button></div><div className="mt-4 space-y-3"><input value={pf.name} onChange={e=>setPf({...pf,name:e.target.value})} placeholder="পণ্যের নাম" className="w-full rounded-lg border p-3"/><select value={pf.category} onChange={e=>setPf({...pf,category:e.target.value})} className="w-full rounded-lg border p-3"><option>Clothing</option><option>Tools</option><option>Computer Work</option></select><input type="number" value={pf.price} onChange={e=>setPf({...pf,price:e.target.value})} placeholder="দাম" className="w-full rounded-lg border p-3"/><input type="number" value={pf.stock} onChange={e=>setPf({...pf,stock:e.target.value})} placeholder="স্টক" className="w-full rounded-lg border p-3"/><input value={pf.sku} onChange={e=>setPf({...pf,sku:e.target.value})} placeholder="SKU" className="w-full rounded-lg border p-3"/></div><div className="mt-4 flex gap-2"><button disabled={busy} onClick={addProduct} className="flex-1 rounded-full bg-[#0E7490] p-3 font-bold text-white">সাবমিট · Under Review</button><button onClick={()=>setPm(false)} className="rounded-full border px-4">বন্ধ</button></div></div></div>}
+ {wm&&<div className="fixed inset-0 z-[60] grid place-items-center bg-black/50 p-4"><div className="w-full max-w-sm rounded-2xl bg-white p-5"><h2 className="text-xl font-bold">টাকা উত্তোলন</h2><p className="mt-1 text-sm text-slate-500">উত্তোলনযোগ্য বিক্রি: ৳{money(sales)}</p><div className="mt-4 space-y-3"><select value={wf.method} onChange={e=>setWf({...wf,method:e.target.value})} className="w-full rounded-lg border p-3"><option>বিকাশ</option><option>নগদ</option><option>ব্যাংক</option></select><input type="number" value={wf.amount} onChange={e=>setWf({...wf,amount:e.target.value})} placeholder="পরিমাণ" className="w-full rounded-lg border p-3"/><input value={wf.account_number} onChange={e=>setWf({...wf,account_number:e.target.value})} placeholder="অ্যাকাউন্ট নম্বর" className="w-full rounded-lg border p-3"/></div><div className="mt-4 flex gap-2"><button disabled={busy} onClick={withdraw} className="flex-1 rounded-full bg-[#F97316] p-3 font-bold text-white">অনুরোধ পাঠান</button><button onClick={()=>setWm(false)} className="rounded-full border px-4">বন্ধ</button></div></div></div>}
+ {notice&&<div role="status" className="fixed bottom-5 left-1/2 z-[70] -translate-x-1/2 rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white">{notice}</div>}
+ <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t bg-white px-2 py-2 lg:hidden">{["ড্যাশবোর্ড","অর্ডার","প্রোডাক্ট","প্রমোশন","ফাইন্যান্স"].map(x=><button key={x} onClick={()=>setTab(x)} className={"flex flex-1 flex-col items-center py-1 text-[10px] font-bold "+(tab===x?"text-[#0E7490]":"text-slate-500")}>{x}</button>)}</nav></div>
 }
