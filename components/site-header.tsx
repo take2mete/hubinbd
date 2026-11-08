@@ -5,14 +5,16 @@ import Link from "next/link";
 
 const categories = [
   { value: "all", label: "সব ক্যাটাগরি" },
-  { value: "clothing", label: "Clothing" },
+  { value: "clothing", label: "জামা-কাপড়" },
   { value: "tools", label: "টুলস" },
   { value: "computer-work", label: "কম্পিউটার ওয়ার্ক" },
 ];
 
 const navLinks = [
   { href: "/", label: "হোম" },
-  { href: "/clothing", label: "Clothing" },
+  { href: "/?category=mens", label: "ছেলেদের জামা" },
+  { href: "/?category=womens", label: "মেয়েদের জামা" },
+  { href: "/?category=kids", label: "বাচ্চাদের জামা" },
   { href: "/tools", label: "টুলস" },
   { href: "/computer-work", label: "কম্পিউটার ওয়ার্ক" },
 ];
