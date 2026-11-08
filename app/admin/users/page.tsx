@@ -1,0 +1,11 @@
+"use client";
+import { useEffect,useState } from "react";
+import { supabase } from "@/lib/supabase/client";
+type UserRow={user_id:string;email:string|null;role:string;created_at:string};
+export default function AdminUsersPage(){
+ const [rows,setRows]=useState<UserRow[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[busy,setBusy]=useState("");
+ async function load(){setLoading(true);setError("");const {data,error:e}=await supabase.rpc("admin_list_users");if(e)setError(e.message);else setRows((data||[]) as UserRow[]);setLoading(false);}
+ useEffect(()=>{void load()},[]);
+ async function changeRole(userId:string,role:string){setBusy(userId);setError("");const {error:e}=await supabase.rpc("admin_set_user_role",{p_user_id:userId,p_role:role});if(e)setError(e.message);else await load();setBusy("");}
+ return <main className="min-h-screen bg-slate-50 p-4 text-slate-900 sm:p-8"><div className="mx-auto max-w-5xl"><a href="/admin" className="text-sm text-blue-700">← Admin Dashboard</a><h1 className="my-5 text-3xl font-black">ব্যবহারকারী ও রোল ব্যবস্থাপনা</h1><p className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">শুধুমাত্র Owner Admin ব্যবহারকারীর রোল পরিবর্তন করতে পারবেন। Owner Admin রোল এখানে পরিবর্তন করা যাবে না।</p>{error&&<p role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}{loading?<p className="rounded-xl bg-white p-5">লোড হচ্ছে…</p>:<div className="overflow-x-auto rounded-2xl border bg-white"><table className="w-full text-left text-sm"><thead className="bg-slate-100"><tr><th className="p-3">ইমেইল</th><th className="p-3">বর্তমান রোল</th><th className="p-3">রোল পরিবর্তন</th></tr></thead><tbody>{rows.map(row=><tr key={row.user_id} className="border-t"><td className="p-3">{row.email||"—"}</td><td className="p-3 font-semibold">{row.role}</td><td className="p-3"><select aria-label={row.email||"User role"} disabled={busy===row.user_id||row.role==="owner_admin"} value={row.role} onChange={e=>void changeRole(row.user_id,e.target.value)} className="rounded-lg border p-2"><option value="customer">customer</option><option value="admin">admin</option><option value="sub_admin">sub_admin</option></select>{busy===row.user_id&&<span className="ml-2 text-xs">Saving…</span>}</td></tr>)}</tbody></table></div>}</div></main>;
+}

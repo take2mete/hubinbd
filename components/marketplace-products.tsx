@@ -15,7 +15,6 @@ const sections = [
   { key: "mens", title: "ছেলেদের জামা", aliases: ["ছেলেদের জামা", "mens", "men", "পুরুষ"] },
   { key: "womens", title: "মেয়েদের জামা", aliases: ["মেয়েদের জামা", "মেয়েদের জামা", "womens", "women", "ladies"] },
   { key: "kids", title: "বাচ্চাদের জামা", aliases: ["বাচ্চাদের জামা", "শিশুদের জামা", "kids", "children", "child"] },
-  { key: "winter", title: "শীতের জামা", aliases: ["শীতের জামা", "winter", "winter wear", "শীতের পোশাক"] },
 ];
 
 function matchesCategory(category: string, aliases: string[]) {
@@ -59,6 +58,12 @@ export default function MarketplaceProducts({ mode = "clothing" }: { mode?: "hom
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [requestedCategory, setRequestedCategory] = useState("");
+
+  useEffect(() => {
+    const category = new URLSearchParams(window.location.search).get("category") || "";
+    setRequestedCategory(category);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -78,6 +83,9 @@ export default function MarketplaceProducts({ mode = "clothing" }: { mode?: "hom
   if (loadError) return <p role="status" className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">পণ্য লোড করা যাচ্ছে না। কিছুক্ষণ পর আবার চেষ্টা করুন।</p>;
 
   if (mode === "home") {
+    const requestedSection = sections.find((section) => section.key === requestedCategory);
+    const categoryProducts = requestedSection ? clothingProducts.filter((product) => matchesCategory(product.category, requestedSection.aliases)) : [];
+    if (requestedSection) return <div className="space-y-6"><ProductSection title={requestedSection.title} subtitle={requestedSection.title + " কালেকশন"} products={categoryProducts} href="/clothing" /><Link href="/clothing" className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700">সব পোশাক দেখুন ↗</Link></div>;
     const latestProducts = clothingProducts.slice(0, 12);
     const bestSellers = topSelling.slice(0, 6);
     return <div className="space-y-10"><ProductSection title="নতুন পণ্য" subtitle="সর্বশেষ যুক্ত হওয়া পণ্য" products={latestProducts} href="/clothing" /><ProductSection title="টপ সেলিং পণ্য" subtitle="বেশি বিক্রি হওয়া জনপ্রিয় পণ্য" products={bestSellers} href="/clothing" /></div>;
