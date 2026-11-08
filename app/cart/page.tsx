@@ -1,25 +1,7 @@
+"use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
-
-export const metadata = {
-  title: "শপিং কার্ট",
-  description: "আপনার HubinBD শপিং কার্ট",
-};
-
-export default function CartPage() {
-  return (
-    <>
-      <SiteHeader />
-      <main className="min-h-[60vh] bg-[#f5f6f8] px-4 py-12 text-[#172033]">
-        <section className="mx-auto max-w-3xl rounded-2xl border border-zinc-200 bg-white px-6 py-12 text-center shadow-sm">
-          <div aria-hidden="true" className="text-5xl">🛒</div>
-          <h1 className="mt-4 text-2xl font-black">আপনার শপিং কার্ট</h1>
-          <p className="mt-2 text-zinc-600">কার্টে এখনো কোনো পণ্য যোগ করা হয়নি।</p>
-          <Link href="/" className="mt-6 inline-flex rounded-xl bg-[#ff6b00] px-5 py-3 font-bold text-white transition hover:bg-orange-700">শপিং শুরু করুন</Link>
-        </section>
-      </main>
-      <SiteFooter />
-    </>
-  );
-}
+import { CartItem, CART_EVENT, clearCart, readCart, removeFromCart, updateCartQuantity } from "@/lib/cart";
+export default function CartPage(){const [items,setItems]=useState<CartItem[]>([]);useEffect(()=>{const sync=()=>setItems(readCart());sync();window.addEventListener(CART_EVENT,sync);window.addEventListener("storage",sync);return()=>{window.removeEventListener(CART_EVENT,sync);window.removeEventListener("storage",sync)}},[]);const total=items.reduce((s,x)=>s+x.price*x.quantity,0);return <><SiteHeader/><main className="min-h-[60vh] bg-[#f5f6f8] px-4 py-10 text-[#172033]"><section className="mx-auto max-w-4xl"><div className="flex items-center justify-between gap-3"><h1 className="text-2xl font-black">আপনার শপিং কার্ট</h1>{items.length>0&&<button onClick={()=>clearCart()} className="text-sm font-bold text-rose-600">সব সরান</button>}</div>{!items.length?<div className="mt-6 rounded-2xl border bg-white px-6 py-12 text-center"><div className="text-5xl">🛒</div><p className="mt-4 text-slate-600">কার্টে এখনো কোনো পণ্য যোগ করা হয়নি।</p><Link href="/" className="mt-6 inline-flex rounded-xl bg-[#ff6b00] px-5 py-3 font-bold text-white">শপিং শুরু করুন</Link></div>:<div className="mt-6 grid gap-5 lg:grid-cols-[1fr_300px]"><div className="space-y-3">{items.map(x=><article key={x.id} className="flex gap-3 rounded-2xl border bg-white p-3">{x.image?<img src={x.image} alt={x.name} className="h-24 w-24 rounded-xl object-cover"/>:<div className="grid h-24 w-24 place-items-center rounded-xl bg-slate-100 text-3xl">🛍️</div>}<div className="min-w-0 flex-1"><h2 className="font-bold">{x.name}</h2><p className="mt-1 font-extrabold text-orange-700">৳{x.price.toLocaleString("bn-BD")}</p><div className="mt-2 flex items-center gap-2"><button aria-label="পরিমাণ কমান" onClick={()=>x.quantity===1?removeFromCart(x.id):updateCartQuantity(x.id,x.quantity-1)} className="h-8 w-8 rounded-lg border">−</button><span className="min-w-5 text-center">{x.quantity}</span><button aria-label="পরিমাণ বাড়ান" onClick={()=>updateCartQuantity(x.id,x.quantity+1)} className="h-8 w-8 rounded-lg border">+</button><button onClick={()=>removeFromCart(x.id)} className="ml-2 text-xs font-bold text-rose-600">সরান</button></div></div></article>)}</div><aside className="h-fit rounded-2xl border bg-white p-5"><h2 className="font-extrabold">অর্ডার সারাংশ</h2><div className="mt-4 flex justify-between text-sm"><span>পণ্যের মোট</span><b>৳{total.toLocaleString("bn-BD")}</b></div><p className="mt-2 text-xs text-slate-500">ডেলিভারি চার্জ চেকআউটে যোগ হবে।</p><Link href={`/checkout?product=${items[0].id}`} className="mt-5 block rounded-xl bg-orange-600 px-4 py-3 text-center font-bold text-white">চেকআউট করুন</Link></aside></div>}</section></main><SiteFooter/></>}
