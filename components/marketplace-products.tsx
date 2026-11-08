@@ -46,7 +46,7 @@ function ProductGrid({ products }: { products: Product[] }) {
     const discount = product.old_price && Number(product.old_price) > Number(product.price) ? Math.round((1 - Number(product.price) / Number(product.old_price)) * 100) : 0;
     return <article key={product.id} className="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white text-[#172033] shadow-sm transition duration-200 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl">
       <div className="relative aspect-square overflow-hidden bg-slate-100">{image ? <Image src={image} alt={product.name_bn || product.name} fill unoptimized sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw" className="object-cover transition duration-500 group-hover:scale-105" /> : <div className="grid h-full place-items-center text-4xl">🛍️</div>}{discount > 0 && <span className="absolute left-2 top-2 rounded-full bg-orange-600 px-2.5 py-1 text-[10px] font-extrabold text-white">{discount}% ছাড়</span>}</div>
-      <div className="p-3 sm:p-3.5"><h3 className="line-clamp-2 min-h-10 text-[13px] font-bold leading-5 text-slate-800 sm:text-sm">{product.name_bn || product.name}</h3><div className="mt-2 flex flex-wrap items-baseline gap-x-2"><p className="text-base font-extrabold text-orange-700">৳{money(product.price)}</p>{product.old_price && Number(product.old_price) > Number(product.price) && <p className="text-[11px] text-slate-400 line-through">৳{money(product.old_price)}</p>}</div><p className="mt-1.5 text-[10px] font-medium text-slate-500">{product.stock && product.stock > 0 ? "✓ স্টকে আছে" : "স্টক যাচাই করুন"}</p></div>
+      <div className="p-3 sm:p-3.5"><h3 className="line-clamp-2 min-h-10 text-[13px] font-bold leading-5 text-slate-800 sm:text-sm">{product.name_bn || product.name}</h3><div className="mt-2 flex flex-wrap items-baseline gap-x-2"><p className="text-base font-extrabold text-orange-700">৳{money(product.price)}</p>{product.old_price && Number(product.old_price) > Number(product.price) && <p className="text-[11px] text-slate-400 line-through">৳{money(product.old_price)}</p>}</div><p className="mt-1.5 text-[10px] font-medium text-slate-500">{product.stock && product.stock > 0 ? "✓ স্টকে আছে" : "স্টক যাচাই করুন"}</p><Link href={`/checkout?product=${product.id}`} className="mt-3 block rounded-lg bg-orange-600 px-3 py-2 text-center text-xs font-bold text-white transition hover:bg-orange-700">এখনই কিনুন</Link></div>
     </article>;
   })}</div>;
 }
@@ -63,7 +63,7 @@ export default function MarketplaceProducts({ mode = "clothing" }: { mode?: "hom
   useEffect(() => {
     let mounted = true;
     async function load() {
-      const { data, error } = await supabase.from("products").select("id,name,name_bn,image_urls,price,old_price,category,stock,sold,created_at").eq("is_active", true).order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("products").select("id,name,name_bn,image_urls,price,old_price,category,stock,sold,created_at").eq("is_active", true).eq("status", "Approved").order("created_at", { ascending: false });
       if (mounted) { if (!error && data) setProducts(data as Product[]); else setLoadError(true); setLoading(false); }
     }
     void load();
@@ -78,8 +78,9 @@ export default function MarketplaceProducts({ mode = "clothing" }: { mode?: "hom
   if (loadError) return <p role="status" className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">পণ্য লোড করা যাচ্ছে না। কিছুক্ষণ পর আবার চেষ্টা করুন।</p>;
 
   if (mode === "home") {
-    const latestProducts = clothingProducts.slice(0, 18);
-    return <ProductGrid products={latestProducts} />;
+    const latestProducts = clothingProducts.slice(0, 12);
+    const bestSellers = topSelling.slice(0, 6);
+    return <div className="space-y-10"><ProductSection title="নতুন পণ্য" subtitle="সর্বশেষ যুক্ত হওয়া পণ্য" products={latestProducts} href="/clothing" /><ProductSection title="টপ সেলিং পণ্য" subtitle="বেশি বিক্রি হওয়া জনপ্রিয় পণ্য" products={bestSellers} href="/clothing" /></div>;
   }
 
   return <div className="space-y-10 sm:space-y-12">
