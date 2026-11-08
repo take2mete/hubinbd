@@ -11,3 +11,15 @@ alter table public.orders add column if not exists affiliate_id uuid references 
 alter table public.orders add column if not exists affiliate_code text;
 alter table public.orders add column if not exists affiliate_attributed_at timestamptz;
 alter table public.orders add column if not exists product_id bigint references public.products(id) on delete set null;
+
+-- Runtime hardening and configured defaults (applied to project database).
+create schema if not exists private;
+revoke all on schema private from public, anon, authenticated;
+grant usage on schema private to anon, authenticated;
+insert into public.affiliate_settings(id,program_enabled,default_commission_rate,cookie_days,minimum_payout,attribution_model,updated_at)
+values(true,false,5,30,500,'last_click',now())
+on conflict(id) do update set default_commission_rate=5,cookie_days=30,minimum_payout=500,attribution_model='last_click',updated_at=now();
+-- Runtime RPCs and triggers are installed directly in the connected project.
+-- Public reads only the non-sensitive settings row; writes remain admin-only.
+drop policy if exists "affiliate settings public read" on public.affiliate_settings;
+create policy "affiliate settings public read" on public.affiliate_settings for select to anon, authenticated using(id=true);
