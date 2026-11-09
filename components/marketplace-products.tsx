@@ -1,98 +1,14 @@
 "use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-
-type Product = {
-  id: string; name: string; name_bn: string | null; image_urls: string[] | null;
-  price: number | string; old_price: number | string | null; category: string;
-  stock: number | null; sold: number | string | null; created_at: string;
-};
-
-const sections = [
-  { key: "mens", title: "ছেলেদের জামা", aliases: ["ছেলেদের জামা", "mens", "men", "পুরুষ"] },
-  { key: "womens", title: "মেয়েদের জামা", aliases: ["মেয়েদের জামা", "মেয়েদের জামা", "womens", "women", "ladies"] },
-  { key: "kids", title: "বাচ্চাদের জামা", aliases: ["বাচ্চাদের জামা", "শিশুদের জামা", "kids", "children", "child"] },
-];
-
-function matchesCategory(category: string, aliases: string[]) {
-  const value = category.trim().toLocaleLowerCase();
-  return aliases.some((alias) => {
-    const normalized = alias.toLocaleLowerCase();
-    if (value === normalized) return true;
-    if (/^[a-z]+$/.test(normalized)) return new RegExp("(^|[^a-z])" + normalized + "([^a-z]|$)").test(value);
-    return value.includes(normalized);
-  });
-}
-
-function soldCount(value: string | number | null) {
-  const normalized = String(value ?? "0").replace(/[০-৯]/g, (digit) => String("০১২৩৪৫৬৭৮৯".indexOf(digit)));
-  const parsed = Number.parseInt(normalized.replace(/[^0-9]/g, ""), 10);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function money(value: number | string | null) {
-  const amount = Number(value || 0);
-  return Number.isFinite(amount) ? new Intl.NumberFormat("bn-BD").format(amount) : "0";
-}
-
-function ProductGrid({ products }: { products: Product[] }) {
-  if (!products.length) return <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center"><span className="text-3xl">🛍️</span><p className="mt-3 text-sm font-semibold text-slate-700">এখনো কোনো পণ্য প্রকাশ করা হয়নি</p><p className="mt-1 text-xs text-slate-500">নতুন পণ্য যোগ হলে এখানে দেখা যাবে।</p></div>;
-  return <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">{products.map((product) => {
-    const image = product.image_urls && product.image_urls[0];
-    const discount = product.old_price && Number(product.old_price) > Number(product.price) ? Math.round((1 - Number(product.price) / Number(product.old_price)) * 100) : 0;
-    return <article key={product.id} className="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white text-[#172033] shadow-sm transition duration-200 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl">
-      <div className="relative aspect-square overflow-hidden bg-slate-100">{image ? <Image src={image} alt={product.name_bn || product.name} fill unoptimized sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw" className="object-cover transition duration-500 group-hover:scale-105" /> : <div className="grid h-full place-items-center text-4xl">🛍️</div>}{discount > 0 && <span className="absolute left-2 top-2 rounded-full bg-orange-600 px-2.5 py-1 text-[10px] font-extrabold text-white">{discount}% ছাড়</span>}</div>
-      <div className="p-3 sm:p-3.5"><h3 className="line-clamp-2 min-h-10 text-[13px] font-bold leading-5 text-slate-800 sm:text-sm">{product.name_bn || product.name}</h3><div className="mt-2 flex flex-wrap items-baseline gap-x-2"><p className="text-base font-extrabold text-orange-700">৳{money(product.price)}</p>{product.old_price && Number(product.old_price) > Number(product.price) && <p className="text-[11px] text-slate-400 line-through">৳{money(product.old_price)}</p>}</div><p className="mt-1.5 text-[10px] font-medium text-slate-500">{product.stock && product.stock > 0 ? "✓ স্টকে আছে" : "স্টক যাচাই করুন"}</p><Link href={`/checkout?product=${product.id}`} className="mt-3 block rounded-lg bg-orange-600 px-3 py-2 text-center text-xs font-bold text-white transition hover:bg-orange-700">এখনই কিনুন</Link></div>
-    </article>;
-  })}</div>;
-}
-
-function ProductSection({ title, subtitle, products, href }: { title: string; subtitle: string; products: Product[]; href?: string }) {
-  return <section><div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-xl font-black text-[#172033] sm:text-2xl">{title}</h2><p className="mt-1 text-xs text-slate-500">{subtitle}</p></div>{href && <Link href={href} className="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-[11px] font-bold text-slate-600 transition hover:border-orange-300 hover:text-orange-700">সব দেখুন ↗</Link>}</div><ProductGrid products={products} /></section>;
-}
-
-export default function MarketplaceProducts({ mode = "clothing" }: { mode?: "home" | "clothing" }) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-  const [requestedCategory, setRequestedCategory] = useState("");
-
-  useEffect(() => {
-    const category = new URLSearchParams(window.location.search).get("category") || "";
-    setRequestedCategory(category);
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    async function load() {
-      const { data, error } = await supabase.from("products").select("id,name,name_bn,image_urls,price,old_price,category,stock,sold,created_at").eq("is_active", true).eq("status", "Approved").order("created_at", { ascending: false });
-      if (mounted) { if (!error && data) setProducts(data as Product[]); else setLoadError(true); setLoading(false); }
-    }
-    void load();
-    return () => { mounted = false; };
-  }, []);
-
-  const clothingProducts = useMemo(() => products.filter((product) => sections.some((section) => matchesCategory(product.category, section.aliases))), [products]);
-  const topSelling = useMemo(() => [...clothingProducts].sort((a, b) => soldCount(b.sold) - soldCount(a.sold)), [clothingProducts]);
-  const grouped = useMemo(() => sections.map((section) => ({ ...section, products: clothingProducts.filter((product) => matchesCategory(product.category, section.aliases)) })), [clothingProducts]);
-
-  if (loading) return <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="aspect-[3/4] animate-pulse rounded-2xl bg-slate-200" />)}</div>;
-  if (loadError) return <p role="status" className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">পণ্য লোড করা যাচ্ছে না। কিছুক্ষণ পর আবার চেষ্টা করুন।</p>;
-
-  if (mode === "home") {
-    const requestedSection = sections.find((section) => section.key === requestedCategory);
-    const categoryProducts = requestedSection ? clothingProducts.filter((product) => matchesCategory(product.category, requestedSection.aliases)) : [];
-    if (requestedSection) return <div className="space-y-6"><ProductSection title={requestedSection.title} subtitle={requestedSection.title + " কালেকশন"} products={categoryProducts} href="/clothing" /><Link href="/clothing" className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700">সব পোশাক দেখুন ↗</Link></div>;
-    const latestProducts = clothingProducts.slice(0, 12);
-    const bestSellers = topSelling.slice(0, 6);
-    return <div className="space-y-10"><ProductSection title="নতুন পণ্য" subtitle="সর্বশেষ যুক্ত হওয়া পণ্য" products={latestProducts} href="/clothing" /><ProductSection title="টপ সেলিং পণ্য" subtitle="বেশি বিক্রি হওয়া জনপ্রিয় পণ্য" products={bestSellers} href="/clothing" /></div>;
-  }
-
-  return <div className="space-y-10 sm:space-y-12">
-    <nav aria-label="পোশাকের ক্যাটাগরি" className="grid grid-cols-2 gap-3 sm:grid-cols-4">{sections.map((section) => <a key={section.key} href={"#" + section.key} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-extrabold text-slate-800 shadow-sm transition hover:border-orange-300 hover:text-orange-700">{section.title}<span className="mt-1 block text-xs font-normal text-slate-500">পণ্য দেখুন ↓</span></a>)}</nav>
-    {grouped.map((section) => <section id={section.key} key={section.key}><ProductSection title={section.title} subtitle={section.title + " কালেকশন"} products={section.products} /></section>)}
-  </div>;
-}
+import { addToCart } from "@/lib/cart";
+type Product={id:number;name:string;name_bn:string|null;image_urls:string[]|null;price:number|string;old_price:number|string|null;category:string;stock:number|null;sold:number|string|null;created_at:string;tag?:string|null};
+const sections=[{key:"mens",title:"ছেলেদের জামা",aliases:["ছেলেদের জামা","mens","men","পুরুষ"]},{key:"womens",title:"মেয়েদের জামা",aliases:["মেয়েদের জামা","মেয়েদের জামা","womens","women","ladies"]},{key:"kids",title:"বাচ্চাদের জামা",aliases:["বাচ্চাদের জামা","শিশুদের জামা","kids","children","child"]}];
+function matchesCategory(category:string,aliases:string[]){const value=category.trim().toLocaleLowerCase();return aliases.some(alias=>{const normalized=alias.toLocaleLowerCase();if(value===normalized)return true;if(/^[a-z]+$/.test(normalized))return new RegExp("(^|[^a-z])"+normalized+"([^a-z]|$)").test(value);return value.includes(normalized)})}
+function soldCount(value:string|number|null){const normalized=String(value??"0").replace(/[০-৯]/g,d=>String("০১২৩৪৫৬৭৮৯".indexOf(d)));const parsed=Number.parseInt(normalized.replace(/[^0-9]/g,""),10);return Number.isFinite(parsed)?parsed:0}
+function money(value:number|string|null){const amount=Number(value||0);return Number.isFinite(amount)?new Intl.NumberFormat("bn-BD").format(amount):"0"}
+function ProductGrid({products}:{products:Product[]}){if(!products.length)return <div className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center"><span className="text-3xl">🛍️</span><p className="mt-3 text-sm font-semibold text-slate-700">এখনো কোনো পণ্য প্রকাশ করা হয়নি</p></div>;return <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:gap-5">{products.map(product=>{const image=product.image_urls?.[0]||null;const discount=product.old_price&&Number(product.old_price)>Number(product.price)?Math.round((1-Number(product.price)/Number(product.old_price))*100):0;return <article key={product.id} className="group min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"><Link href={`/product/${product.id}`} className="block"><div className="relative aspect-square overflow-hidden bg-slate-50">{image?<Image src={image} alt={product.name_bn||product.name} fill unoptimized sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" className="object-contain p-2 transition duration-300 group-hover:scale-[1.04]"/>:<div className="grid h-full place-items-center text-4xl">🛍️</div>}{discount>0&&<span className="absolute left-2 top-2 rounded bg-orange-600 px-2 py-1 text-[10px] font-bold text-white">{discount}% ছাড়</span>}{product.tag&&<span className="absolute right-2 top-2 rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white">{product.tag}</span>}</div><div className="px-2.5 pb-1 pt-2.5 sm:px-3"><h3 className="line-clamp-2 min-h-10 text-[12px] leading-[1.45] text-slate-700 sm:text-[13px]">{product.name_bn||product.name}</h3><div className="mt-1.5 flex flex-wrap items-baseline gap-x-2"><p className="text-[15px] font-semibold text-[#f05a28] sm:text-base">৳ {money(product.price)}</p>{product.old_price&&Number(product.old_price)>Number(product.price)&&<p className="text-[10px] text-slate-400 line-through">৳ {money(product.old_price)}</p>}</div></div></Link><div className="flex items-center justify-between px-2.5 pb-2.5 sm:px-3"><span className="truncate text-[10px] text-slate-400">ঢাকা</span><button type="button" disabled={!product.stock||product.stock<1} onClick={()=>addToCart({id:String(product.id),name:product.name_bn||product.name,image,price:Number(product.price)})} className="rounded-md border border-orange-500 px-2 py-1 text-[10px] font-semibold text-orange-600 hover:bg-orange-50 disabled:opacity-40">কার্টে যোগ</button></div></article>})}</div>}
+function ProductSection({title,subtitle,products,href}:{title:string;subtitle:string;products:Product[];href?:string}){return <section><div className="mb-3 flex items-end justify-between gap-3 sm:mb-4"><div><h2 className="text-lg font-bold text-[#252b36] sm:text-xl">{title}</h2><p className="mt-1 text-[11px] text-slate-500 sm:text-xs">{subtitle}</p></div>{href&&<Link href={href} className="shrink-0 text-xs font-semibold text-orange-600 hover:underline">সব দেখুন ›</Link>}</div><ProductGrid products={products}/></section>}
+export default function MarketplaceProducts({mode="clothing"}:{mode?:"home"|"clothing"}){const [products,setProducts]=useState<Product[]>([]);const [loading,setLoading]=useState(true);const [loadError,setLoadError]=useState(false);const [requestedCategory,setRequestedCategory]=useState("");useEffect(()=>{setRequestedCategory(new URLSearchParams(window.location.search).get("category")||"")},[]);useEffect(()=>{let mounted=true;async function load(){const {data,error}=await supabase.from("products").select("id,name,name_bn,image_urls,price,old_price,category,stock,sold,created_at,tag").eq("is_active",true).eq("status","Approved").order("created_at",{ascending:false});if(mounted){if(!error&&data)setProducts(data as Product[]);else setLoadError(true);setLoading(false)}}void load();return()=>{mounted=false}},[]);const clothing=useMemo(()=>products.filter(p=>sections.some(s=>matchesCategory(p.category,s.aliases))),[products]);const best=useMemo(()=>[...clothing].sort((a,b)=>soldCount(b.sold)-soldCount(a.sold)),[clothing]);const grouped=useMemo(()=>sections.map(s=>({...s,products:clothing.filter(p=>matchesCategory(p.category,s.aliases))})),[clothing]);if(loading)return <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{Array.from({length:8}).map((_,i)=><div key={i} className="aspect-[.78] animate-pulse rounded-xl bg-slate-200"/>)}</div>;if(loadError)return <p role="status" className="rounded-xl bg-amber-50 p-5 text-sm text-amber-800">পণ্য লোড করা যাচ্ছে না। কিছুক্ষণ পর আবার চেষ্টা করুন।</p>;if(mode==="home"){const wanted=sections.find(s=>s.key===requestedCategory);if(wanted)return <ProductSection title={wanted.title} subtitle={wanted.title+" কালেকশন"} products={clothing.filter(p=>matchesCategory(p.category,wanted.aliases))} href="/clothing"/>;return <div className="space-y-8 sm:space-y-10"><ProductSection title="নতুন পণ্য" subtitle="সর্বশেষ যুক্ত হওয়া পণ্য" products={clothing.slice(0,8)} href="/clothing"/><ProductSection title="টপ সেলিং পণ্য" subtitle="জনপ্রিয় পণ্য" products={best.slice(0,8)} href="/clothing"/></div>}return <div className="space-y-10"><nav className="grid grid-cols-3 gap-2">{sections.map(s=><a key={s.key} href={"#"+s.key} className="rounded-lg border bg-white p-3 text-center text-xs font-bold text-slate-700 hover:border-orange-400">{s.title}</a>)}</nav>{grouped.map(s=><section id={s.key} key={s.key}><ProductSection title={s.title} subtitle={s.title+" কালেকশন"} products={s.products}/></section>)}</div>}
