@@ -12,7 +12,7 @@ export default function HomePage() {
         <h1 className="sr-only">
           বাংলাদেশের অনলাইন শপিং ও ডিজিটাল সার্ভিস প্ল্যাটফর্ম
         </h1>
-        <section className="pb-12 pt-8">
+        <section className="pb-12 pt-0">
           <MarketplaceProducts mode="home" />
         </section>
       </div>
