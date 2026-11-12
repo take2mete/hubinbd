@@ -15,13 +15,13 @@ export async function convertToWebP(file: File): Promise<File> {
     .normalize("NFKC")
     .trim()
     .toLowerCase()
-    .replace(/\\s+/g, "-")
+    .replace(/\s+/g, "-")
     .replace(/[^a-z0-9._-]/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "") || "image";
 
   if (file.type === "image/webp") {
-    const webpName = normalizedName.replace(/\\.(jpe?g|png|webp)$/i, ".webp");
+    const webpName = normalizedName.replace(/\.(jpe?g|png|webp)$/i, ".webp");
     return new File([file], webpName.endsWith(".webp") ? webpName : `${webpName}.webp`, {
       type: "image/webp",
       lastModified: file.lastModified,
@@ -63,7 +63,7 @@ export async function convertToWebP(file: File): Promise<File> {
         }
       }
       if (hasTransparency) {
-        return new File([file], normalizedName.replace(/\\.(jpe?g|png)$/i, ".png"), {
+        return new File([file], normalizedName.replace(/\.(jpe?g|png)$/i, ".png"), {
           type: "image/png",
           lastModified: file.lastModified,
         });
@@ -78,7 +78,7 @@ export async function convertToWebP(file: File): Promise<File> {
       );
     });
 
-    const webpName = normalizedName.replace(/\\.(jpe?g|png|webp)$/i, ".webp");
+    const webpName = normalizedName.replace(/\.(jpe?g|png|webp)$/i, ".webp");
     return new File([blob], webpName.endsWith(".webp") ? webpName : `${webpName}.webp`, {
       type: "image/webp",
       lastModified: file.lastModified,
