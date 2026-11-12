@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { bannerDefaults } from "@/lib/banners";
 import { supabase } from "@/lib/supabase/client";
+import { convertToWebP } from "@/lib/image-utils";
 
 export default function BannerManager() {
  const [items,setItems] = useState(bannerDefaults);
@@ -24,8 +25,11 @@ export default function BannerManager() {
   if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5242880){setMessage("JPG, PNG বা WebP ছবি দিন (সর্বোচ্চ ৫ MB)।");return;}
   const bitmap=await createImageBitmap(file);const width=slot===1?720:200;const height=slot===1?200:90;const valid=bitmap.width===width&&bitmap.height===height;bitmap.close();
   if(!valid){setMessage("Slot "+slot+": ছবির মাপ "+width+" × "+height+" px হতে হবে।");return;}
-  const path="slot-"+slot+"-"+Date.now()+"."+file.name.split(".").pop();
-  const {error}=await supabase.storage.from("banner-images").upload(path,file,{contentType:file.type});
+  let optimized:File;
+  try{optimized=await convertToWebP(file);}catch(e){setMessage(e instanceof Error?e.message:"ছবি কনভার্ট করা যায়নি");return;}
+  const ext=optimized.name.split(".").pop()?.toLowerCase()||"png";
+  const path="slot-"+slot+"-"+Date.now()+"."+ext;
+  const {error}=await supabase.storage.from("banner-images").upload(path,optimized,{contentType:optimized.type||`image/${ext}`});
   if(error){setMessage(error.message);return;}
   const {data}=supabase.storage.from("banner-images").getPublicUrl(path);
   setItems(old=>old.map(b=>b.slot===slot?{...b,image_url:data.publicUrl}:b));setMessage("ছবি আপলোড হয়েছে। পরিবর্তন প্রকাশ করতে Save চাপুন।");
