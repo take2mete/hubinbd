@@ -2,6 +2,7 @@
 import { useCallback,useEffect,useMemo,useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { convertToWebP } from "@/lib/image-utils";
 type Seller={user_id:string;business_name:string;phone:string;status:string};
 type Order={id:string;order_no:string;customer_name:string;phone:string;address:string;product_name:string;amount:number;status:string;hub:string;created_at:string};
 type Product={id:string|number;name:string;name_bn?:string|null;description?:string|null;brand?:string|null;image_urls?:string[]|null;category:string;price:number;old_price?:number|null;colors?:string[]|null;sizes?:string[]|null;delivery_charge_inside?:number;delivery_charge_outside?:number;cod_available?:boolean;return_policy?:string;stock:number;sku:string|null;status:string;sold:string|number|null;rating?:number|null};
@@ -48,9 +49,12 @@ export default function SellerDashboard(){
   if(!file)return;
   if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5*1024*1024){toast("JPG, PNG বা WebP ছবি দিন (সর্বোচ্চ ৫ MB)।");return}
   setBusy(true);
-  const ext=file.name.split(".").pop()?.toLowerCase()||"jpg";
+  let optimized: File;
+  try { optimized = await convertToWebP(file); }
+  catch (e) { toast(e instanceof Error ? e.message : "ছবি কনভার্ট করা যায়নি"); setBusy(false); return; }
+  const ext=optimized.name.split(".").pop()?.toLowerCase()||"png";
   const path=uid+"/media/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;
-  const {error}=await supabase.storage.from("product-images").upload(path,file,{contentType:file.type,upsert:false});
+  const {error}=await supabase.storage.from("product-images").upload(path,optimized,{contentType:optimized.type,upsert:false});
   if(error)toast("ছবি আপলোড হয়নি: "+error.message);
   else {const {data}=supabase.storage.from("product-images").getPublicUrl(path);setPf(p=>({...p,image_urls:p.image_urls.length<4?[...p.image_urls,data.publicUrl]:p.image_urls}));toast("Media Center-এ ছবি আপলোড হয়েছে; Add/Edit ফর্মে যুক্ত করা হয়েছে।")}
   setBusy(false);
