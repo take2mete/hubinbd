@@ -24,17 +24,21 @@ export default function ComputerWorkServiceGrid({ services }: { services: Servic
   }, []);
 
   useEffect(() => {
-    const next: Record<string, string> = {};
-    for (const service of services) {
-      const extensions = ["webp", "png"];
-      for (const ext of extensions) {
-        const path = `computer-work/${service.slug}.${ext}`;
-        const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
-        // Both candidate URLs are deterministic; prefer WebP, with PNG as fallback.
-        if (ext === "webp") next[service.slug] = data.publicUrl;
+    let active = true;
+    void (async () => {
+      const { data: files, error } = await supabase.storage.from("site-assets").list("computer-work");
+      if (!active || error || !files) return;
+      const next: Record<string, string> = {};
+      for (const service of services) {
+        const matching = files.find((file) => file.name === service.slug + ".webp")
+          || files.find((file) => file.name === service.slug + ".png");
+        if (!matching) continue;
+        const { data } = supabase.storage.from("site-assets").getPublicUrl("computer-work/" + matching.name);
+        next[service.slug] = data.publicUrl;
       }
-    }
-    setImages(next);
+      if (active) setImages(next);
+    })();
+    return () => { active = false; };
   }, [services]);
 
   async function uploadImage(service: Service, event: ChangeEvent<HTMLInputElement>) {
