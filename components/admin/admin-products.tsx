@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { convertToWebP } from "@/lib/image-utils";
 
 type Product = {
   id: number;
@@ -97,8 +98,12 @@ export default function AdminProducts() {
     if (file.size > 5 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       setError("JPG, PNG বা WebP ছবি দিন (সর্বোচ্চ ৫ MB)।"); return;
     }
-    const path = "admin/" + Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const { error: uploadError } = await supabase.storage.from("product-images").upload(path, file, { contentType: file.type });
+    let optimized: File;
+    try { optimized = await convertToWebP(file); }
+    catch (e) { setError(e instanceof Error ? e.message : "ছবি কনভার্ট করা যায়নি"); return; }
+    const ext = optimized.name.split(".").pop()?.toLowerCase() || "png";
+    const path = "admin/" + Date.now() + "-" + optimized.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const { error: uploadError } = await supabase.storage.from("product-images").upload(path, optimized, { contentType: optimized.type || `image/${ext}` });
     if (uploadError) { setError(uploadError.message); return; }
     const { data } = supabase.storage.from("product-images").getPublicUrl(path);
     setEdit({ ...edit, image_urls: [...(edit.image_urls || []), data.publicUrl] });
