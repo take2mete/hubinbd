@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AffiliateReferralTracker from "@/components/affiliate-referral-tracker";
+import AdPlacementRenderer from "@/components/ad-placement-renderer";
 export const metadata: Metadata = {
  metadataBase: new URL("https://www.hubinbd.com"),
  title: { default: "HubinBD — বাংলাদেশের অনলাইন শপিং ও ডিজিটাল সার্ভিস", template: "%s | HubinBD" },
@@ -12,5 +13,5 @@ export const metadata: Metadata = {
  robots: { index:true,follow:true },
 };
 export default function RootLayout({children}:{children:React.ReactNode}) {
- return <html lang="bn"><body><AffiliateReferralTracker />{children}</body></html>;
+ return <html lang="bn"><body><AffiliateReferralTracker /><AdPlacementRenderer />{children}</body></html>;
 }
