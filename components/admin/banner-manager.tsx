@@ -150,8 +150,8 @@ export default function BannerManager() {
 
   async function uploadPlacementImage(file?: File) {
     if (!file) return;
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 8 * 1024 * 1024) {
-      setMessage("JPG, PNG বা WebP ছবি দিন (সর্বোচ্চ ৮ MB)।"); return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      setMessage("JPG, PNG বা WebP ছবি দিন (সর্বোচ্চ ৫ MB)।"); return;
     }
     setSaving(true); setMessage("");
     try {
@@ -205,7 +205,7 @@ export default function BannerManager() {
         <p className="mt-1 text-sm text-zinc-400">হোমপেজের হেডারের নিচে দেখানো তিনটি ব্যানার এখান থেকে পরিবর্তন করুন।</p>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           {items.map((item, index) => (
-            <section key={item.slot} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+            <section key={item.slot} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 text-zinc-100">
               <h3 className="font-bold">{index + 1}. {item.title}</h3>
               <div className={"relative mt-3 w-full overflow-hidden rounded-xl bg-zinc-800 " + (index === 0 ? "aspect-[3.4/1]" : "aspect-[4.34/1]")}>
                 {item.image_url && <Image src={item.image_url} alt={item.title} fill unoptimized className="object-contain" />}
@@ -225,7 +225,7 @@ export default function BannerManager() {
       <section className="mt-12 border-t border-zinc-800 pt-8">
         <h2 className="text-2xl font-black">Adsterra Advertisement Manager</h2>
         <p className="mt-2 text-sm text-zinc-400">Adsterra Publisher Dashboard থেকে পাওয়া সম্পূর্ণ Ad Code পেস্ট করুন। কোডটি পরিবর্তন করা হবে না।</p>
-        <form id="adsterra-editor" onSubmit={saveAd} className="mt-5 grid gap-4 rounded-2xl border border-zinc-700 bg-zinc-900 p-4 sm:p-6">
+        <form id="adsterra-editor" onSubmit={saveAd} className="mt-5 grid gap-4 rounded-2xl border border-zinc-700 bg-zinc-900 p-4 text-zinc-100 sm:p-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-1 text-sm">কনটেন্টের ধরন
               <select value={draft.content_type} onChange={(e) => setDraft({ ...draft, content_type: e.target.value as "adsterra" | "image" })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-3"><option value="adsterra">Adsterra Code</option><option value="image">ছবি ব্যানার</option></select>
@@ -292,7 +292,7 @@ export default function BannerManager() {
         <div className="mt-6 grid gap-3">
           <h3 className="font-bold">সংরক্ষিত বিজ্ঞাপন ({ads.length})</h3>
           {ads.length === 0 && <p className="rounded-xl border border-dashed border-zinc-700 p-5 text-sm text-zinc-400">এখনো কোনো Adsterra Code যোগ করা হয়নি।</p>}
-          {ads.map((ad) => <article key={ad.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          {ads.map((ad) => <article key={ad.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-zinc-100">
             <div className="min-w-0"><p className="font-semibold">{ad.title}</p><p className="text-xs text-zinc-400">{ad.content_type === "image" ? "ছবি ব্যানার" : "Adsterra"} · {ad.page_path === "*" ? "সব পেজ" : ad.page_path} · {ad.position === "after-header" ? "Header-এর নিচে" : ad.position === "middle" ? "মাঝখানে" : "Footer-এর আগে"}</p><p className="mt-1 text-xs text-zinc-500">{ad.width_px}% × {ad.height_px}px · মোবাইল {ad.mobile_width_px}% × {ad.mobile_height_px}px</p></div>
             <div className="flex flex-wrap items-center gap-2">
               <button onClick={() => void toggleAd(ad)} className="rounded-lg border border-zinc-600 px-3 py-2 text-xs">{ad.enabled ? "চালু · বন্ধ করুন" : "বন্ধ · চালু করুন"}</button>

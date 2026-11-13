@@ -21,4 +21,4 @@ body {
 }
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
-::selection { background: #ff6b00; color: #fff; }
+::selection { background: #ffe0c2; color: #18181b; }
