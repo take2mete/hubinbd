@@ -24,13 +24,15 @@ type AdPlacement = {
   object_fit: "contain" | "cover" | "fill";
 };
 
-const emptyAd = {
+type AdDraft = Omit<AdPlacement, "id">;
+
+const emptyAd: AdDraft = {
   page_path: "*",
   position: "after-header" as AdPlacement["position"],
   title: "Adsterra Ad",
   ad_code: "",
   enabled: false,
-  content_type: "adsterra" as const,
+  content_type: "adsterra",
   image_url: null as string | null,
   link_url: "",
   width_px: 100,
@@ -38,13 +40,13 @@ const emptyAd = {
   max_width_px: 1200,
   mobile_width_px: 100,
   mobile_height_px: 100,
-  object_fit: "contain" as const,
+  object_fit: "contain",
 };
 
 export default function BannerManager() {
   const [items, setItems] = useState(bannerDefaults);
   const [ads, setAds] = useState<AdPlacement[]>([]);
-  const [draft, setDraft] = useState(emptyAd);
+  const [draft, setDraft] = useState<AdDraft>(emptyAd);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [customPath, setCustomPath] = useState("");
   const [email, setEmail] = useState("");
