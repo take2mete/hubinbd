@@ -20,7 +20,9 @@ type Placement = {
   object_fit?: "contain" | "cover" | "fill";
 };
 
-function mountPlacement(anchor: Element, item: Placement) {
+type MountedPlacement = { wrapper: HTMLElement; style: HTMLStyleElement };
+
+function mountPlacement(anchor: Element, item: Placement, insertAfter?: Element | null): MountedPlacement | null {
   const width = Math.min(100, Math.max(10, item.width_px ?? 100));
   const mobileWidth = Math.min(100, Math.max(10, item.mobile_width_px ?? 100));
   const height = Math.min(2000, Math.max(50, item.height_px ?? 120));
@@ -67,8 +69,14 @@ function mountPlacement(anchor: Element, item: Placement) {
     style.remove();
     return null;
   }
-  if (item.position === "before-footer") anchor.parentElement?.insertBefore(wrapper, anchor);
-  else anchor.insertAdjacentElement("afterend", wrapper);
+
+  if (item.position === "before-footer") {
+    anchor.parentElement?.insertBefore(wrapper, anchor);
+  } else if (insertAfter?.parentElement) {
+    insertAfter.insertAdjacentElement("afterend", wrapper);
+  } else {
+    anchor.insertAdjacentElement("afterend", wrapper);
+  }
   return { wrapper, style };
 }
 
@@ -76,7 +84,7 @@ export default function AdPlacementRenderer() {
   useEffect(() => {
     let active = true;
     let observer: MutationObserver | undefined;
-    let rendered: Array<{ wrapper: HTMLElement; style: HTMLStyleElement }> = [];
+    let rendered: MountedPlacement[] = [];
     let lastPath = "";
     let placements: Placement[] = [];
 
@@ -88,21 +96,31 @@ export default function AdPlacementRenderer() {
     const render = () => {
       if (!active) return;
       const path = window.location.pathname;
-      if (path !== lastPath) { clear(); lastPath = path; }
-      if (rendered.length) return;
+      if (path !== lastPath) {
+        clear();
+        lastPath = path;
+      }
+
       const matched = placements.filter((item) => item.page_path === "*" || item.page_path === path);
       for (const position of ["after-header", "middle", "before-footer"] as const) {
         const candidates = matched.filter((item) => item.position === position);
         if (!candidates.length) continue;
+
         const anchor = position === "after-header"
-          ? document.querySelector("body > header, body header")
+          ? document.querySelector("[data-site-header], body > header, header")
           : position === "before-footer"
-            ? document.querySelector("body footer, footer")
-            : document.querySelector("main > section, main > div > section, main section");
+            ? document.querySelector("[data-site-footer], body > footer, footer")
+            : document.querySelector("main > section, main > div > section, main section, main");
+
         if (!anchor) continue;
+        let insertionPoint: Element | null = anchor;
         for (const item of candidates) {
-          const result = mountPlacement(anchor, item);
-          if (result) rendered.push(result);
+          if (rendered.some(({ wrapper }) => wrapper.dataset.placementId === item.id)) continue;
+          const result = mountPlacement(anchor, item, position === "before-footer" ? null : insertionPoint);
+          if (result) {
+            rendered.push(result);
+            if (position !== "before-footer") insertionPoint = result.wrapper;
+          }
         }
       }
     };
@@ -118,6 +136,7 @@ export default function AdPlacementRenderer() {
       observer.observe(document.body, { childList: true, subtree: true });
       window.addEventListener("popstate", render);
     };
+
     void load();
     return () => {
       active = false;
@@ -126,5 +145,6 @@ export default function AdPlacementRenderer() {
       clear();
     };
   }, []);
+
   return null;
 }
