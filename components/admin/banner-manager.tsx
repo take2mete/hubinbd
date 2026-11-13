@@ -140,8 +140,9 @@ export default function BannerManager() {
 
   function editAd(ad: AdPlacement) {
     setEditingId(ad.id);
-    setDraft({ ...emptyAd, page_path: ad.page_path, position: ad.position, title: ad.title, ad_code: ad.ad_code, enabled: ad.enabled, content_type: ad.content_type || "adsterra", image_url: ad.image_url, link_url: ad.link_url || "", width_px: ad.width_px ?? 100, height_px: ad.height_px ?? 120, max_width_px: ad.max_width_px ?? 1200, mobile_width_px: ad.mobile_width_px ?? 100, mobile_height_px: ad.mobile_height_px ?? 100, object_fit: ad.object_fit || "contain" });
-    setCustomPath(ad.page_path === "*" || ["/", "/tools", "/computer-work", "/clothing"].includes(ad.page_path) ? "" : ad.page_path);
+    const knownPaths = ["*", "/", "/tools", "/computer-work", "/clothing"];
+    setDraft({ ...emptyAd, page_path: knownPaths.includes(ad.page_path) ? ad.page_path : "custom", position: ad.position, title: ad.title, ad_code: ad.ad_code, enabled: ad.enabled, content_type: ad.content_type || "adsterra", image_url: ad.image_url, link_url: ad.link_url || "", width_px: ad.width_px ?? 100, height_px: ad.height_px ?? 120, max_width_px: ad.max_width_px ?? 1200, mobile_width_px: ad.mobile_width_px ?? 100, mobile_height_px: ad.mobile_height_px ?? 100, object_fit: ad.object_fit || "contain" });
+    setCustomPath(knownPaths.includes(ad.page_path) ? "" : ad.page_path);
     document.getElementById("adsterra-editor")?.scrollIntoView({ behavior: "smooth" });
   }
 
