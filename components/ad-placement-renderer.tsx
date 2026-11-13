@@ -11,7 +11,7 @@ function mountAd(host: HTMLElement, ad: Ad) {
   wrapper.dataset.adId = ad.id;
   const frame = document.createElement("iframe");
   frame.title = ad.title || "Advertisement";
-  frame.setAttribute("sandbox", "allow-scripts allow-same-origin allow-popups allow-forms");
+  frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms");
   frame.setAttribute("loading", "lazy");
   frame.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
   frame.style.cssText = "display:block;width:100%;min-height:100px;border:0;overflow:hidden;background:transparent";
