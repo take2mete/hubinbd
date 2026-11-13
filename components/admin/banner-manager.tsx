@@ -13,6 +13,15 @@ type AdPlacement = {
   title: string;
   ad_code: string;
   enabled: boolean;
+  content_type: "adsterra" | "image";
+  image_url: string | null;
+  link_url: string;
+  width_px: number;
+  height_px: number;
+  max_width_px: number;
+  mobile_width_px: number;
+  mobile_height_px: number;
+  object_fit: "contain" | "cover" | "fill";
 };
 
 const emptyAd = {
@@ -21,6 +30,15 @@ const emptyAd = {
   title: "Adsterra Ad",
   ad_code: "",
   enabled: false,
+  content_type: "adsterra" as const,
+  image_url: null as string | null,
+  link_url: "",
+  width_px: 100,
+  height_px: 120,
+  max_width_px: 1200,
+  mobile_width_px: 100,
+  mobile_height_px: 100,
+  object_fit: "contain" as const,
 };
 
 export default function BannerManager() {
@@ -48,7 +66,7 @@ export default function BannerManager() {
       }
       const [bannerResult, adResult] = await Promise.all([
         supabase.from("banners").select("slot,image_url,link_url,title").in("slot", bannerDefaults.map((item) => item.slot)).order("slot"),
-        supabase.from("ad_placements").select("id,page_path,position,title,ad_code,enabled").order("created_at", { ascending: false }),
+        supabase.from("ad_placements").select("id,page_path,position,title,ad_code,enabled,content_type,image_url,link_url,width_px,height_px,max_width_px,mobile_width_px,mobile_height_px,object_fit").order("created_at", { ascending: false }),
       ]);
       if (live) {
         setEmail(session.user.email || "");
@@ -103,14 +121,15 @@ export default function BannerManager() {
 
   async function saveAd(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!draft.ad_code.trim()) { setMessage("Adsterra Ad Code পেস্ট করুন।"); return; }
+    if (draft.content_type === "adsterra" && !draft.ad_code.trim()) { setMessage("Adsterra Ad Code পেস্ট করুন।"); return; }
+    if (draft.content_type === "image" && !draft.image_url) { setMessage("ব্যানার ছবি আপলোড করুন।"); return; }
     const pagePath = customPath.trim() || draft.page_path;
     if (pagePath !== "*" && !pagePath.startsWith("/")) { setMessage("Page path অবশ্যই / দিয়ে শুরু হবে।"); return; }
     setSaving(true); setMessage("");
-    const payload = { ...draft, page_path: pagePath, ad_code: draft.ad_code.trim(), updated_at: new Date().toISOString() };
+    const payload = { ...draft, page_path: pagePath, ad_code: draft.content_type === "adsterra" ? draft.ad_code.trim() : "", updated_at: new Date().toISOString() };
     const result = editingId
-      ? await supabase.from("ad_placements").update(payload).eq("id", editingId).select("id,page_path,position,title,ad_code,enabled").single()
-      : await supabase.from("ad_placements").insert(payload).select("id,page_path,position,title,ad_code,enabled").single();
+      ? await supabase.from("ad_placements").update(payload).eq("id", editingId).select("id,page_path,position,title,ad_code,enabled,content_type,image_url,link_url,width_px,height_px,max_width_px,mobile_width_px,mobile_height_px,object_fit").single()
+      : await supabase.from("ad_placements").insert(payload).select("id,page_path,position,title,ad_code,enabled,content_type,image_url,link_url,width_px,height_px,max_width_px,mobile_width_px,mobile_height_px,object_fit").single();
     setSaving(false);
     if (result.error) { setMessage("সংরক্ষণ হয়নি: " + result.error.message); return; }
     const row = result.data as AdPlacement;
@@ -121,9 +140,27 @@ export default function BannerManager() {
 
   function editAd(ad: AdPlacement) {
     setEditingId(ad.id);
-    setDraft({ page_path: ad.page_path, position: ad.position, title: ad.title, ad_code: ad.ad_code, enabled: ad.enabled });
+    setDraft({ ...emptyAd, page_path: ad.page_path, position: ad.position, title: ad.title, ad_code: ad.ad_code, enabled: ad.enabled, content_type: ad.content_type || "adsterra", image_url: ad.image_url, link_url: ad.link_url || "", width_px: ad.width_px ?? 100, height_px: ad.height_px ?? 120, max_width_px: ad.max_width_px ?? 1200, mobile_width_px: ad.mobile_width_px ?? 100, mobile_height_px: ad.mobile_height_px ?? 100, object_fit: ad.object_fit || "contain" });
     setCustomPath(ad.page_path === "*" || ["/", "/tools", "/computer-work", "/clothing"].includes(ad.page_path) ? "" : ad.page_path);
     document.getElementById("adsterra-editor")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function uploadPlacementImage(file?: File) {
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 8 * 1024 * 1024) {
+      setMessage("JPG, PNG বা WebP ছবি দিন (সর্বোচ্চ ৮ MB)।"); return;
+    }
+    setSaving(true); setMessage("");
+    try {
+      const optimized = await convertToWebP(file);
+      const path = `ad-banners/banner-${Date.now()}-${Math.random().toString(36).slice(2,8)}.webp`;
+      const { error } = await supabase.storage.from("banner-images").upload(path, optimized, { contentType: "image/webp", cacheControl: "3600" });
+      if (error) throw error;
+      const { data } = supabase.storage.from("banner-images").getPublicUrl(path);
+      setDraft((current) => ({ ...current, image_url: data.publicUrl }));
+      setMessage("ব্যানার ছবি আপলোড হয়েছে। এখন Save/Update করুন।");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "ছবি আপলোড হয়নি।"); }
+    finally { setSaving(false); }
   }
 
   async function toggleAd(ad: AdPlacement) {
@@ -187,6 +224,9 @@ export default function BannerManager() {
         <p className="mt-2 text-sm text-zinc-400">Adsterra Publisher Dashboard থেকে পাওয়া সম্পূর্ণ Ad Code পেস্ট করুন। কোডটি পরিবর্তন করা হবে না।</p>
         <form id="adsterra-editor" onSubmit={saveAd} className="mt-5 grid gap-4 rounded-2xl border border-zinc-700 bg-zinc-900 p-4 sm:p-6">
           <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-1 text-sm">কনটেন্টের ধরন
+              <select value={draft.content_type} onChange={(e) => setDraft({ ...draft, content_type: e.target.value as "adsterra" | "image" })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-3"><option value="adsterra">Adsterra Code</option><option value="image">ছবি ব্যানার</option></select>
+            </label>
             <label className="grid gap-1 text-sm">বিজ্ঞাপনের নাম
               <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} required className="rounded-lg border border-zinc-700 bg-zinc-950 p-3" />
             </label>
@@ -205,9 +245,41 @@ export default function BannerManager() {
             </label>
             <label className="flex items-center gap-3 self-end rounded-lg border border-zinc-700 p-3 text-sm"><input type="checkbox" checked={draft.enabled} onChange={(e) => setDraft({ ...draft, enabled: e.target.checked })} /> সংরক্ষণের পর বিজ্ঞাপন চালু রাখুন</label>
           </div>
-          <label className="grid gap-1 text-sm">Adsterra Ad Code
+          {draft.content_type === "adsterra" ? <label className="grid gap-1 text-sm">Adsterra Ad Code
             <textarea value={draft.ad_code} onChange={(e) => setDraft({ ...draft, ad_code: e.target.value })} required rows={7} spellCheck={false} placeholder={'<script type="text/javascript"> ... </script>'} className="w-full rounded-lg border border-zinc-700 bg-zinc-950 p-3 font-mono text-xs" />
-          </label>
+          </label> : <div className="grid gap-3 rounded-xl border border-zinc-700 p-3 sm:col-span-2">
+            <label className="grid gap-2 text-sm">ব্যানার ছবি আপলোড (JPG/PNG/WebP, সর্বোচ্চ ৮ MB)
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { void uploadPlacementImage(e.target.files?.[0]); e.currentTarget.value = ""; }} className="text-xs" />
+            </label>
+            {draft.image_url && <div className="relative h-40 w-full overflow-hidden rounded-lg bg-zinc-800"><Image src={draft.image_url} alt={draft.title} fill unoptimized className="object-contain" /></div>}
+            <label className="grid gap-1 text-sm">ক্লিক করলে কোথায় যাবে? (ঐচ্ছিক)
+              <input value={draft.link_url} onChange={(e) => setDraft({ ...draft, link_url: e.target.value })} placeholder="https://example.com অথবা /page" className="rounded-lg border border-zinc-700 bg-zinc-950 p-3" />
+            </label>
+          </div>}
+          <div className="grid gap-3 rounded-xl border border-zinc-700 p-3 sm:col-span-2">
+            <h3 className="font-semibold">ব্যানার সাইজ (Responsive)</h3>
+            <p className="text-xs text-zinc-400">Width শতাংশে, Height ও Max Width পিক্সেলে নির্ধারণ করুন। মোবাইলের জন্য আলাদা মাপ দিন।</p>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+              <label className="grid gap-1 text-xs">Desktop width %
+                <input type="number" min="10" max="100" value={draft.width_px} onChange={(e) => setDraft({ ...draft, width_px: Number(e.target.value) })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-2" />
+              </label>
+              <label className="grid gap-1 text-xs">Desktop height px
+                <input type="number" min="50" max="2000" value={draft.height_px} onChange={(e) => setDraft({ ...draft, height_px: Number(e.target.value) })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-2" />
+              </label>
+              <label className="grid gap-1 text-xs">Max width px
+                <input type="number" min="100" max="2400" value={draft.max_width_px} onChange={(e) => setDraft({ ...draft, max_width_px: Number(e.target.value) })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-2" />
+              </label>
+              <label className="grid gap-1 text-xs">Mobile width %
+                <input type="number" min="10" max="100" value={draft.mobile_width_px} onChange={(e) => setDraft({ ...draft, mobile_width_px: Number(e.target.value) })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-2" />
+              </label>
+              <label className="grid gap-1 text-xs">Mobile height px
+                <input type="number" min="50" max="2000" value={draft.mobile_height_px} onChange={(e) => setDraft({ ...draft, mobile_height_px: Number(e.target.value) })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-2" />
+              </label>
+            </div>
+            {draft.content_type === "image" && <label className="flex items-center gap-2 text-sm">Image fit
+              <select value={draft.object_fit} onChange={(e) => setDraft({ ...draft, object_fit: e.target.value as "contain" | "cover" | "fill" })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-2"><option value="contain">Contain</option><option value="cover">Cover</option><option value="fill">Fill</option></select>
+            </label>}
+          </div>
           <div className="flex flex-wrap gap-3">
             <button disabled={saving} className="rounded-xl bg-[#ff6b00] px-6 py-3 font-bold disabled:opacity-50">{saving ? "Saving…" : editingId ? "Update Ad" : "Add Ad Placement"}</button>
             {editingId && <button type="button" onClick={() => { setEditingId(null); setDraft(emptyAd); setCustomPath(""); }} className="rounded-xl border border-zinc-600 px-5 py-3">Cancel Edit</button>}
@@ -218,7 +290,7 @@ export default function BannerManager() {
           <h3 className="font-bold">সংরক্ষিত বিজ্ঞাপন ({ads.length})</h3>
           {ads.length === 0 && <p className="rounded-xl border border-dashed border-zinc-700 p-5 text-sm text-zinc-400">এখনো কোনো Adsterra Code যোগ করা হয়নি।</p>}
           {ads.map((ad) => <article key={ad.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-            <div className="min-w-0"><p className="font-semibold">{ad.title}</p><p className="text-xs text-zinc-400">{ad.page_path === "*" ? "সব পেজ" : ad.page_path} · {ad.position === "after-header" ? "Header-এর নিচে" : ad.position === "middle" ? "মাঝখানে" : "Footer-এর আগে"}</p><p className="mt-1 text-xs text-zinc-500">{ad.ad_code.length.toLocaleString()} characters</p></div>
+            <div className="min-w-0"><p className="font-semibold">{ad.title}</p><p className="text-xs text-zinc-400">{ad.content_type === "image" ? "ছবি ব্যানার" : "Adsterra"} · {ad.page_path === "*" ? "সব পেজ" : ad.page_path} · {ad.position === "after-header" ? "Header-এর নিচে" : ad.position === "middle" ? "মাঝখানে" : "Footer-এর আগে"}</p><p className="mt-1 text-xs text-zinc-500">{ad.width_px}% × {ad.height_px}px · মোবাইল {ad.mobile_width_px}% × {ad.mobile_height_px}px</p></div>
             <div className="flex flex-wrap items-center gap-2">
               <button onClick={() => void toggleAd(ad)} className="rounded-lg border border-zinc-600 px-3 py-2 text-xs">{ad.enabled ? "চালু · বন্ধ করুন" : "বন্ধ · চালু করুন"}</button>
               <button onClick={() => editAd(ad)} className="rounded-lg border border-zinc-600 px-3 py-2 text-xs">Edit</button>
