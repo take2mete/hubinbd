@@ -225,13 +225,13 @@ export default function BannerManager() {
       <section className="mt-12 border-t border-zinc-800 pt-8">
         <h2 className="text-2xl font-black">Adsterra Advertisement Manager</h2>
         <p className="mt-2 text-sm text-zinc-400">Adsterra Publisher Dashboard থেকে পাওয়া সম্পূর্ণ Ad Code পেস্ট করুন। কোডটি পরিবর্তন করা হবে না।</p>
-        <form id="adsterra-editor" onSubmit={saveAd} className="mt-5 grid gap-4 rounded-2xl border border-zinc-700 bg-zinc-900 p-4 sm:p-6">
+        <form id="adsterra-editor" onSubmit={saveAd} className="mt-5 grid gap-4 rounded-2xl border border-zinc-700 bg-zinc-900 p-4 text-zinc-100 sm:p-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-1 text-sm">কনটেন্টের ধরন
-              <select value={draft.content_type} onChange={(e) => setDraft({ ...draft, content_type: e.target.value as "adsterra" | "image" })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-3"><option value="adsterra">Adsterra Code</option><option value="image">ছবি ব্যানার</option></select>
+              <select value={draft.content_type} onChange={(e) => setDraft({ ...draft, content_type: e.target.value as "adsterra" | "image" })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-zinc-100"><option value="adsterra">Adsterra Code</option><option value="image">ছবি ব্যানার</option></select>
             </label>
             <label className="grid gap-1 text-sm">বিজ্ঞাপনের নাম
-              <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} required className="rounded-lg border border-zinc-700 bg-zinc-950 p-3" />
+              <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} required className="rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-zinc-100 placeholder:text-zinc-500" />
             </label>
             <label className="grid gap-1 text-sm">কোন পেজে দেখাবেন?
               <select value={draft.page_path} onChange={(e) => { setDraft({ ...draft, page_path: e.target.value }); setCustomPath(""); }} className="rounded-lg border border-zinc-700 bg-zinc-950 p-3">
@@ -249,7 +249,7 @@ export default function BannerManager() {
             <label className="flex items-center gap-3 self-end rounded-lg border border-zinc-700 p-3 text-sm"><input type="checkbox" checked={draft.enabled} onChange={(e) => setDraft({ ...draft, enabled: e.target.checked })} /> সংরক্ষণের পর বিজ্ঞাপন চালু রাখুন</label>
           </div>
           {draft.content_type === "adsterra" ? <label className="grid gap-1 text-sm">Adsterra Ad Code
-            <textarea value={draft.ad_code} onChange={(e) => setDraft({ ...draft, ad_code: e.target.value })} required rows={7} spellCheck={false} placeholder={'<script type="text/javascript"> ... </script>'} className="w-full rounded-lg border border-zinc-700 bg-zinc-950 p-3 font-mono text-xs" />
+            <textarea value={draft.ad_code} onChange={(e) => setDraft({ ...draft, ad_code: e.target.value })} required rows={7} spellCheck={false} placeholder={'<script type="text/javascript"> ... </script>'} className="w-full rounded-lg border border-zinc-700 bg-zinc-950 p-3 font-mono text-xs text-zinc-100 placeholder:text-zinc-500" />
           </label> : <div className="grid gap-3 rounded-xl border border-zinc-700 p-3 sm:col-span-2">
             <label className="grid gap-2 text-sm">ব্যানার ছবি আপলোড (JPG/PNG/WebP, সর্বোচ্চ ৮ MB)
               <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { void uploadPlacementImage(e.target.files?.[0]); e.currentTarget.value = ""; }} className="text-xs" />
@@ -264,7 +264,7 @@ export default function BannerManager() {
             <p className="text-xs text-zinc-400">Width শতাংশে, Height ও Max Width পিক্সেলে নির্ধারণ করুন। মোবাইলের জন্য আলাদা মাপ দিন।</p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
               <label className="grid gap-1 text-xs">Desktop width %
-                <input type="number" min="10" max="100" value={draft.width_px} onChange={(e) => setDraft({ ...draft, width_px: Number(e.target.value) })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-2" />
+                <input type="number" min="10" max="100" value={draft.width_px} onChange={(e) => setDraft({ ...draft, width_px: Number(e.target.value) })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-2 text-zinc-100" />
               </label>
               <label className="grid gap-1 text-xs">Desktop height px
                 <input type="number" min="50" max="2000" value={draft.height_px} onChange={(e) => setDraft({ ...draft, height_px: Number(e.target.value) })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-2" />
@@ -280,7 +280,7 @@ export default function BannerManager() {
               </label>
             </div>
             {draft.content_type === "image" && <label className="flex items-center gap-2 text-sm">Image fit
-              <select value={draft.object_fit} onChange={(e) => setDraft({ ...draft, object_fit: e.target.value as "contain" | "cover" | "fill" })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-2"><option value="contain">Contain</option><option value="cover">Cover</option><option value="fill">Fill</option></select>
+              <select value={draft.object_fit} onChange={(e) => setDraft({ ...draft, object_fit: e.target.value as "contain" | "cover" | "fill" })} className="rounded-lg border border-zinc-700 bg-zinc-950 p-2 text-zinc-100"><option value="contain">Contain</option><option value="cover">Cover</option><option value="fill">Fill</option></select>
             </label>}
           </div>
           <div className="flex flex-wrap gap-3">
