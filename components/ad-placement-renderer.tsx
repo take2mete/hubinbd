@@ -25,23 +25,18 @@ type MountedPlacement = { wrapper: HTMLElement; style: HTMLStyleElement };
 function appendAdsterraCode(container: HTMLElement, code: string) {
   const template = document.createElement("template");
   template.innerHTML = code;
-
-  const activateScripts = (parent: Node) => {
-    for (const node of Array.from(parent.childNodes)) {
-      if (node.nodeType === Node.ELEMENT_NODE && (node as Element).tagName === "SCRIPT") {
-        const original = node as HTMLScriptElement;
-        const script = document.createElement("script");
-        for (const attribute of Array.from(original.attributes)) script.setAttribute(attribute.name, attribute.value);
-        script.textContent = original.textContent;
-        original.replaceWith(script);
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        activateScripts(node);
-      }
-    }
-  };
-
-  activateScripts(template.content);
+  const originalScripts = Array.from(template.content.querySelectorAll("script"));
+  const placeholders = originalScripts.map(() => document.createComment("Adsterra script"));
+  originalScripts.forEach((script, index) => script.replaceWith(placeholders[index]));
   container.appendChild(template.content);
+
+  originalScripts.forEach((original, index) => {
+    const script = document.createElement("script");
+    for (const attribute of Array.from(original.attributes)) script.setAttribute(attribute.name, attribute.value);
+    if (!original.hasAttribute("async")) script.async = false;
+    script.textContent = original.textContent;
+    placeholders[index].replaceWith(script);
+  });
 }
 
 function mountPlacement(anchor: Element, item: Placement, insertAfter?: Element | null): MountedPlacement | null {
