@@ -22,6 +22,28 @@ type Placement = {
 
 type MountedPlacement = { wrapper: HTMLElement; style: HTMLStyleElement };
 
+function appendAdsterraCode(container: HTMLElement, code: string) {
+  const template = document.createElement("template");
+  template.innerHTML = code;
+
+  const activateScripts = (parent: Node) => {
+    for (const node of Array.from(parent.childNodes)) {
+      if (node.nodeType === Node.ELEMENT_NODE && (node as Element).tagName === "SCRIPT") {
+        const original = node as HTMLScriptElement;
+        const script = document.createElement("script");
+        for (const attribute of Array.from(original.attributes)) script.setAttribute(attribute.name, attribute.value);
+        script.textContent = original.textContent;
+        original.replaceWith(script);
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        activateScripts(node);
+      }
+    }
+  };
+
+  activateScripts(template.content);
+  container.appendChild(template.content);
+}
+
 function mountPlacement(anchor: Element, item: Placement, insertAfter?: Element | null): MountedPlacement | null {
   const width = Math.min(100, Math.max(10, item.width_px ?? 100));
   const mobileWidth = Math.min(100, Math.max(10, item.mobile_width_px ?? 100));
@@ -55,16 +77,11 @@ function mountPlacement(anchor: Element, item: Placement, insertAfter?: Element 
       wrapper.appendChild(link);
     } else wrapper.appendChild(image);
   } else if (item.ad_code) {
-    const frame = document.createElement("iframe");
-    frame.title = item.title || "Advertisement";
-    frame.setAttribute("sandbox", "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms");
-    frame.setAttribute("loading", "lazy");
-    frame.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
-    frame.className = "hubinbd-placement-content";
-    frame.style.cssText = `display:block;width:100%;height:${height}px;border:0;overflow:hidden;background:transparent`;
-    const safeTitle = (item.title || "Advertisement").replace(/[<>&"]/g, "");
-    frame.srcdoc = "<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'><style>html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden}body{display:flex;justify-content:center;align-items:center}img{max-width:100%;height:auto}</style></head><body><div aria-label='" + safeTitle + "'>" + item.ad_code + "</div></body></html>";
-    wrapper.appendChild(frame);
+    const adContent = document.createElement("div");
+    adContent.className = "hubinbd-placement-content";
+    adContent.setAttribute("aria-label", item.title || "Advertisement");
+    adContent.style.cssText = `display:block;width:100%;min-height:${height}px;overflow:visible;background:transparent`;
+    wrapper.appendChild(adContent);
   } else {
     style.remove();
     return null;
@@ -76,6 +93,11 @@ function mountPlacement(anchor: Element, item: Placement, insertAfter?: Element 
     insertAfter.insertAdjacentElement("afterend", wrapper);
   } else {
     anchor.insertAdjacentElement("afterend", wrapper);
+  }
+
+  if (item.content_type !== "image" && item.ad_code) {
+    const content = wrapper.querySelector<HTMLElement>(".hubinbd-placement-content");
+    if (content) appendAdsterraCode(content, item.ad_code);
   }
   return { wrapper, style };
 }
@@ -106,11 +128,18 @@ export default function AdPlacementRenderer() {
         const candidates = matched.filter((item) => item.position === position);
         if (!candidates.length) continue;
 
+        const main = document.querySelector("main");
+        const middleSections = main
+          ? Array.from(main.querySelectorAll(":scope > section, :scope > div > section"))
+          : [];
+        const middleAnchor = middleSections.length
+          ? middleSections[Math.floor(middleSections.length / 2)]
+          : main;
         const anchor = position === "after-header"
           ? document.querySelector("[data-site-header], body > header, header")
           : position === "before-footer"
             ? document.querySelector("[data-site-footer], body > footer, footer")
-            : document.querySelector("main > section, main > div > section, main section, main");
+            : middleAnchor;
 
         if (!anchor) continue;
         let insertionPoint: Element | null = anchor;
