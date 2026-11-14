@@ -26,13 +26,15 @@ function englishDigits(value: string) {
 }
 
 async function roleFor(userId: string): Promise<Role> {
+  const { data: vendor, error: vendorError } = await supabase.from("vendors").select("user_id,status").eq("user_id", userId).maybeSingle();
+  if (vendorError) throw vendorError;
   const { data: roleRow, error } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
   if (error) throw error;
   const role = roleRow?.role as Role | undefined;
-  if (role === "owner_admin" || role === "sub_admin" || role === "admin" || role === "vendor" || role === "customer") return role;
-  const { data: vendor, error: vendorError } = await supabase.from("vendors").select("user_id").eq("user_id", userId).maybeSingle();
-  if (vendorError) throw vendorError;
-  return vendor ? "vendor" : null;
+  if (role === "owner_admin" || role === "sub_admin" || role === "admin") return role;
+  if (vendor?.status === "approved") return "vendor";
+  if (role === "vendor") return "vendor";
+  return role || (vendor ? "customer" : null);
 }
 async function destinationFor(userId: string) {
   const role = await roleFor(userId);
@@ -50,6 +52,8 @@ function AuthFields({ mode, seller = false, admin = false }: { mode: "login" | "
     const {data,error:signInError}=await supabase.auth.signInWithPassword({email,password});if(signInError)throw signInError;
     const role=await roleFor(data.user.id);
     if(admin&&role!=="owner_admin"&&role!=="sub_admin"&&role!=="admin"){await supabase.auth.signOut();throw new Error("এই অ্যাকাউন্টের Admin অনুমতি নেই।");}
+    const pendingSellerApplication=data.user.user_metadata?.seller_application;
+    if(role!=="vendor"&&pendingSellerApplication){router.replace("/seller/register");return;}
     if(seller&&role!=="vendor"){router.replace("/seller/register");return;}
     router.replace(admin?"/admin":seller?"/seller/dashboard":await destinationFor(data.user.id));
   }catch(err){setError(message(err));}finally{setBusy(false);}}
