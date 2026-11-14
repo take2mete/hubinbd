@@ -4,8 +4,6 @@ import {supabase} from "@/lib/supabase/client";
 type Main={id:number;name:string;slug:string;image:string|null;sort_order:number;is_active:boolean};
 type Sub={id:number;main_category_id:number;name:string;slug:string;image:string|null;sort_order:number;is_active:boolean};
 type Legacy={id:number;name:string;name_bn:string|null;slug:string;icon:string|null};
-const roles=["owner_admin","sub_admin","admin"];
-const initial=[{name:"ফ্যাশন",slug:"fashion",subs:[["পুরুষদের ফ্যাশন","mens-fashion"],["নারীদের ফ্যাশন","womens-fashion"],["কিডস ফ্যাশন","kids-fashion"],["জুতা","shoes"],["ব্যাগ ও এক্সেসরিজ","bags-accessories"]]},{name:"গ্যাজেট",slug:"gadget",subs:[["মোবাইল এক্সেসরিজ","mobile-accessories"],["হেডফোন ও স্পিকার","headphones-speakers"],["স্মার্ট গ্যাজেট","smart-gadgets"],["কম্পিউটার ও গেমিং","computer-gaming"]]},{name:"হোম",slug:"home",subs:[["হোম ডেকর ও লাইটিং","home-decor-lighting"],["কিচেন ও ডাইনিং","kitchen-dining"],["বেডরুম ও বাথরুম","bedroom-bathroom"],["ফার্নিচার ও অর্গানাইজার","furniture-organizers"]]}] as const;
 export default function MarketplaceCategoryManager(){
  const [mains,setMains]=useState<Main[]>([]),[subs,setSubs]=useState<Sub[]>([]),[legacy,setLegacy]=useState<Legacy[]>([]),[error,setError]=useState(""),[busy,setBusy]=useState(false);
  const [parent,setParent]=useState(""),[mainName,setMainName]=useState(""),[mainSlug,setMainSlug]=useState(""),[subName,setSubName]=useState(""),[subSlug,setSubSlug]=useState("");
