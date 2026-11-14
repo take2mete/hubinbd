@@ -16,6 +16,7 @@ type Product = {
   old_price: number;
   stock: number;
   category: string;
+  sub_category_id: number | null;
   is_active: boolean;
   status: string;
   vendor_id: string | null;
@@ -33,6 +34,9 @@ const isApproved = (p: Product) => p.is_active || ["Approved", "approved", "Publ
 export default function AdminProducts() {
   const [items, setItems] = useState<Product[]>([]);
   const [vendors, setVendors] = useState<Record<string, Vendor>>({});
+  const [mainCategories, setMainCategories] = useState<{id:number;name:string}[]>([]);
+  const [subCategories, setSubCategories] = useState<{id:number;main_category_id:number;name:string}[]>([]);
+  const [selectedMainCategory, setSelectedMainCategory] = useState("");
   const [edit, setEdit] = useState<Product | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [error, setError] = useState("");
@@ -50,9 +54,15 @@ export default function AdminProducts() {
       return;
     }
     const { data, error: loadError } = await supabase.from("products")
-      .select("id,name,name_bn,brand,description,image_urls,sizes,colors,price,old_price,stock,category,is_active,status,vendor_id,sku,sold,created_at")
+      .select("id,name,name_bn,brand,description,image_urls,sizes,colors,price,old_price,stock,category,sub_category_id,is_active,status,vendor_id,sku,sold,created_at")
       .order("created_at", { ascending: false });
     if (loadError) { setError(loadError.message); return; }
+    const [mainResult, subResult] = await Promise.all([
+      supabase.from("main_categories").select("id,name").eq("is_active", true).order("sort_order"),
+      supabase.from("sub_categories").select("id,main_category_id,name").eq("is_active", true).order("sort_order")
+    ]);
+    if (mainResult.error || subResult.error) { setError(mainResult.error?.message || subResult.error?.message || "ক্যাটাগরি লোড হয়নি"); return; }
+    setMainCategories(mainResult.data || []); setSubCategories(subResult.data || []);
     const rows = (data || []) as Product[];
     setItems(rows);
     const ids = [...new Set(rows.map(p => p.vendor_id).filter((id): id is string => Boolean(id)))];
@@ -86,7 +96,8 @@ export default function AdminProducts() {
     const { error: updateError } = await supabase.from("products").update({
       name: edit.name, name_bn: edit.name_bn, brand: edit.brand, description: edit.description,
       image_urls: edit.image_urls, sizes: edit.sizes, colors: edit.colors, price: edit.price,
-      old_price: edit.old_price, stock: edit.stock, category: edit.category
+      old_price: edit.old_price, stock: edit.stock, category: subCategories.find(c => c.id === Number(edit.sub_category_id))?.name || edit.category,
+      sub_category_id: edit.sub_category_id || null
     }).eq("id", edit.id);
     setBusy(false);
     if (updateError) { setError(updateError.message); return; }
@@ -159,12 +170,22 @@ export default function AdminProducts() {
 
       {edit && <form onSubmit={save} className="mb-5 grid gap-3 rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
         <h2 className="text-lg font-extrabold sm:col-span-2 lg:col-span-3">পণ্য সম্পাদনা · #{edit.id}</h2>
-        {([["name","Product Name"],["name_bn","বাংলা নাম"],["brand","Brand"],["category","Category"],["description","বিবরণ"]] as [keyof Product,string][]).map(([key,label]) =>
+        {([["name","Product Name"],["name_bn","বাংলা নাম"],["brand","Brand"],["description","বিবরণ"]] as [keyof Product,string][]).map(([key,label]) =>
           <label key={key} className={key === "description" ? "sm:col-span-2 lg:col-span-3 text-sm font-semibold" : "text-sm font-semibold"}>{label}
             {key === "description" ? <textarea rows={3} className={inputClass} value={String(edit[key] || "")} onChange={e => setEdit({...edit,[key]:e.target.value})} /> :
               <input className={inputClass} value={String(edit[key] || "")} onChange={e => setEdit({...edit,[key]:e.target.value})} />}
           </label>
         )}
+        <label className="text-sm font-semibold">মূল ক্যাটাগরি
+          <select required className={inputClass} value={selectedMainCategory} onChange={e=>{setSelectedMainCategory(e.target.value);setEdit({...edit,sub_category_id:null,category:""})}}>
+            <option value="">মূল ক্যাটাগরি নির্বাচন</option>{mainCategories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </label>
+        <label className="text-sm font-semibold">সাব-ক্যাটাগরি
+          <select required className={inputClass} value={edit.sub_category_id ? String(edit.sub_category_id) : ""} onChange={e=>{const sub=subCategories.find(c=>c.id===Number(e.target.value));setEdit({...edit,sub_category_id:sub?.id||null,category:sub?.name||""})}}>
+            <option value="">সাব-ক্যাটাগরি নির্বাচন</option>{subCategories.filter(c=>c.main_category_id===Number(selectedMainCategory)).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </label>
         {([["price","দাম"],["old_price","আগের দাম"],["stock","স্টক"]] as [keyof Product,string][]).map(([key,label]) =>
           <label key={key} className="text-sm font-semibold">{label}<input type="number" min="0" className={inputClass} value={Number(edit[key] || 0)} onChange={e => setEdit({...edit,[key]:Number(e.target.value)})}/></label>
         )}
@@ -195,7 +216,7 @@ export default function AdminProducts() {
               <div><span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${approved ? "bg-emerald-100 text-emerald-700" : rejected ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-800"}`}>{approved ? "প্রকাশিত" : rejected ? "প্রত্যাখ্যাত" : "অনুমোদনের অপেক্ষায়"}</span></div>
               <div className="flex flex-wrap gap-2 lg:justify-end">
                 {pending && <><button disabled={busyId === p.id} onClick={()=>void moderate(p,"approve")} className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50">{busyId === p.id ? "..." : "✓ Approve"}</button><button disabled={busyId === p.id} onClick={()=>void moderate(p,"reject")} className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 disabled:opacity-50">Reject</button></>}
-                <button onClick={()=>setEdit({...p,image_urls:p.image_urls||[],sizes:p.sizes||[],colors:p.colors||[]})} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Edit</button>
+                <button onClick={()=>{setSelectedMainCategory(String(subCategories.find(c=>c.id===p.sub_category_id)?.main_category_id||""));setEdit({...p,image_urls:p.image_urls||[],sizes:p.sizes||[],colors:p.colors||[]})}} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Edit</button>
                 <button onClick={()=>void remove(p.id)} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50">Delete</button>
               </div>
             </article>;
