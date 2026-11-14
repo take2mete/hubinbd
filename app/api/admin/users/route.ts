@@ -47,8 +47,10 @@ export async function DELETE(request: Request) {
     if (!body || typeof body !== "object" || !("userId" in body) || typeof body.userId !== "string") {
       return NextResponse.json({ error: "সঠিক ইউজার নির্বাচন করুন।" }, { status: 400 });
     }
-    const userId = body.userId;
-
+    const userId = body.userId.trim();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)) {
+      return NextResponse.json({ error: "সঠিক ইউজার নির্বাচন করুন।" }, { status: 400 });
+    }
     if (userId === authData.user.id) {
       return NextResponse.json({ error: "নিজের অ্যাকাউন্ট ডিলিট করা যাবে না।" }, { status: 400 });
     }
@@ -62,23 +64,65 @@ export async function DELETE(request: Request) {
     if (targetRoleError) {
       return NextResponse.json({ error: targetRoleError.message }, { status: 500 });
     }
-    if (targetRole?.role === "owner_admin" || targetRole?.role === "admin" || targetRole?.role === "sub_admin") {
+    if (["owner_admin", "admin", "sub_admin"].includes(targetRole?.role || "")) {
       return NextResponse.json({ error: "Admin/Owner Admin অ্যাকাউন্ট এই পেজ থেকে ডিলিট করা যাবে না।" }, { status: 403 });
     }
 
-    const { count: sellerOrderCount, error: ordersError } = await adminClient
+    // Preserve order and financial history for both seller and customer accounts.
+    const { count: orderCount, error: ordersError } = await adminClient
       .from("orders")
+      .select("id", { count: "exact", head: true })
+      .or(`seller_id.eq.${userId},customer_id.eq.${userId}`);
+
+    if (ordersError) {
+      return NextResponse.json({ error: "অর্ডার ইতিহাস যাচাই করা যায়নি: " + ordersError.message }, { status: 500 });
+    }
+    if ((orderCount || 0) > 0) {
+      return NextResponse.json(
+        { error: "এই অ্যাকাউন্টের সঙ্গে অর্ডার যুক্ত আছে। অর্ডার ইতিহাস অক্ষত রাখতে ডিলিট করা যাবে না।" },
+        { status: 409 },
+      );
+    }
+
+    const { count: payoutCount, error: payoutsError } = await adminClient
+      .from("payouts")
       .select("id", { count: "exact", head: true })
       .eq("seller_id", userId);
 
-    if (ordersError) {
-      return NextResponse.json({ error: "সেলারের অর্ডার যাচাই করা যায়নি: " + ordersError.message }, { status: 500 });
+    if (payoutsError) {
+      return NextResponse.json({ error: "পেমেন্ট ইতিহাস যাচাই করা যায়নি: " + payoutsError.message }, { status: 500 });
     }
-    if ((sellerOrderCount || 0) > 0) {
+    if ((payoutCount || 0) > 0) {
       return NextResponse.json(
-        { error: "এই সেলারের অর্ডার ইতিহাস আছে। অর্ডার রেকর্ড অক্ষত রাখতে অ্যাকাউন্টটি ডিলিট করা যাচ্ছে না। আগে সেলার অ্যাকাউন্ট নিষ্ক্রিয়/রোল পরিবর্তন করুন।" },
+        { error: "এই সেলারের পেআউট/কমিশন রেকর্ড আছে। আর্থিক ইতিহাস সংরক্ষণের জন্য ডিলিট করা যাবে না।" },
         { status: 409 },
       );
+    }
+
+    const { count: voucherCount, error: vouchersError } = await adminClient
+      .from("vouchers")
+      .select("id", { count: "exact", head: true })
+      .eq("seller_id", userId);
+
+    if (vouchersError) {
+      return NextResponse.json({ error: "ভাউচার রেকর্ড যাচাই করা যায়নি: " + vouchersError.message }, { status: 500 });
+    }
+    if ((voucherCount || 0) > 0) {
+      return NextResponse.json(
+        { error: "এই সেলারের ভাউচার রেকর্ড আছে। রেকর্ড অক্ষত রাখতে ডিলিট করা যাবে না।" },
+        { status: 409 },
+      );
+    }
+
+    // Remove referencing rows first; only proceed to Auth deletion if each step succeeds.
+    const { error: vendorDeleteError } = await adminClient.from("vendors").delete().eq("user_id", userId);
+    if (vendorDeleteError) {
+      return NextResponse.json({ error: "সেলার রেকর্ড মুছতে সমস্যা হয়েছে: " + vendorDeleteError.message }, { status: 409 });
+    }
+
+    const { error: roleDeleteError } = await adminClient.from("user_roles").delete().eq("user_id", userId);
+    if (roleDeleteError) {
+      return NextResponse.json({ error: "ইউজার রোল মুছতে সমস্যা হয়েছে: " + roleDeleteError.message }, { status: 409 });
     }
 
     const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(userId);
@@ -88,10 +132,6 @@ export async function DELETE(request: Request) {
         { status: 409 },
       );
     }
-
-    // These records are not guaranteed to cascade from auth.users in this project.
-    await adminClient.from("vendors").delete().eq("user_id", userId);
-    await adminClient.from("user_roles").delete().eq("user_id", userId);
 
     return NextResponse.json({ success: true });
   } catch (error) {
