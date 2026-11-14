@@ -5,7 +5,10 @@ export const runtime = "nodejs";
 
 export async function DELETE(request: Request) {
   try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    // Match the browser client: Supabase auth requires the project root URL,
+    // not a REST endpoint such as /rest/v1.
+    const url = configuredUrl.replace(/\\/rest\\/v1\\/?$/, "").replace(/\\/+$/, "");
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
 
