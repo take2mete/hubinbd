@@ -42,8 +42,22 @@ export async function DELETE(request: Request) {
       .eq("user_id", authData.user.id)
       .maybeSingle();
 
-    if (actorRoleError || actorRole?.role !== "owner_admin") {
-      return NextResponse.json({ error: "শুধু Owner Admin এই কাজ করতে পারবেন।" }, { status: 403 });
+    if (actorRoleError) {
+      console.error("Admin user deletion role lookup failed:", actorRoleError);
+      return NextResponse.json(
+        { error: "Owner Admin অনুমতি যাচাই করা যায়নি। সার্ভার Role lookup error: " + actorRoleError.message },
+        { status: 500 },
+      );
+    }
+    if (actorRole?.role !== "owner_admin") {
+      console.warn("Admin user deletion denied: authenticated user is not owner_admin", {
+        userId: authData.user.id,
+        role: actorRole?.role ?? null,
+      });
+      return NextResponse.json(
+        { error: "এই লগইন সেশনে Owner Admin অনুমতি পাওয়া যায়নি। Owner Admin অ্যাকাউন্ট দিয়ে আবার লগইন করুন।" },
+        { status: 403 },
+      );
     }
 
     const body: unknown = await request.json();
