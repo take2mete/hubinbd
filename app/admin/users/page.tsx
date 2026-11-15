@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
-type UserRow = { user_id: string; email: string | null; role: string; created_at: string; is_verified: boolean; account_type: "seller" | "customer" };
+type UserRow = { user_id: string; email: string | null; role: string; created_at: string; is_verified: boolean; account_type: "seller" | "customer" | "admin" };
 
 export default function AdminUsersPage() {
   const [rows, setRows] = useState<UserRow[]>([]);
@@ -55,7 +55,7 @@ export default function AdminUsersPage() {
     {loading ? <p className="rounded-xl bg-white p-5">লোড হচ্ছে…</p> : <div className="overflow-x-auto rounded-2xl border bg-white"><table className="w-full text-left text-sm">
       <thead className="bg-slate-100"><tr><th className="p-3">ইমেইল</th><th className="p-3">অ্যাকাউন্ট</th><th className="p-3">বর্তমান রোল</th><th className="p-3">ভেরিফিকেশন</th><th className="p-3">রোল পরিবর্তন</th><th className="p-3">অ্যাকশন</th></tr></thead>
       <tbody>{rows.map(row => { const protectedRole = ["owner_admin","admin","sub_admin"].includes(row.role); return <tr key={row.user_id} className="border-t">
-        <td className="p-3">{row.email || "—"}</td><td className="p-3">{row.account_type === "seller" ? "Seller" : "Customer"}</td><td className="p-3 font-semibold">{row.role}</td>
+        <td className="p-3">{row.email || "—"}</td><td className="p-3">{row.account_type === "seller" ? "Seller" : row.account_type === "admin" ? "Admin" : "Customer"}</td><td className="p-3 font-semibold">{row.role}</td>
         <td className="p-3"><button type="button" disabled={busy===row.user_id || protectedRole} onClick={()=>void setVerification(row)} className={`rounded-lg px-3 py-2 font-semibold text-white disabled:opacity-40 ${row.is_verified?"bg-amber-600 hover:bg-amber-700":"bg-emerald-600 hover:bg-emerald-700"}`}>{busy===row.user_id?"অপেক্ষা করুন…":row.is_verified?"Unverify":"Verify"}</button><span className={`ml-2 text-xs font-semibold ${row.is_verified?"text-emerald-700":"text-amber-700"}`}>{row.is_verified?"Verified":"Unverified"}</span></td>
         <td className="p-3"><select aria-label={row.email||"User role"} disabled={busy===row.user_id || row.role==="owner_admin"} value={row.role} onChange={event=>void changeRole(row.user_id,event.target.value)} className="rounded-lg border p-2"><option value="customer">customer</option><option value="vendor">vendor (সেলার)</option><option value="admin">admin</option><option value="sub_admin">sub_admin</option></select></td>
         <td className="p-3"><button type="button" disabled={busy===row.user_id || protectedRole} onClick={()=>void deleteUser(row)} className="rounded-lg bg-red-600 px-3 py-2 font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40">{busy===row.user_id?"অপেক্ষা করুন…":"ডিলিট"}</button></td>
