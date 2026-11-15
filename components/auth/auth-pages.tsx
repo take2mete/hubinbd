@@ -50,9 +50,14 @@ function AuthFields({ mode, seller = false, admin = false }: { mode: "login" | "
   async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();setBusy(true);setError("");setNotice("");try{
     if(mode==="register"){if(password!==confirmPassword)throw new Error("পাসওয়ার্ড ও Confirm Password মিলছে না।");const {data,error:signUpError}=await supabase.auth.signUp({email,password,options:{data:{full_name:name.trim(),phone:englishDigits(phone).trim(),address:address.trim()}}});if(signUpError)throw signUpError;if(!data.session){setNotice("রেজিস্ট্রেশন হয়েছে। ইমেইল verification সম্পন্ন করে লগইন করুন।");return;}router.replace("/");return;}
     const {data,error:signInError}=await supabase.auth.signInWithPassword({email,password});if(signInError)throw signInError;
-    const role=await roleFor(data.user.id);
+    let role=await roleFor(data.user.id);
     if(admin&&role!=="owner_admin"&&role!=="sub_admin"&&role!=="admin"){await supabase.auth.signOut();throw new Error("এই অ্যাকাউন্টের Admin অনুমতি নেই।");}
-    const pendingSellerApplication=data.user.user_metadata?.seller_application;
+    const pendingSellerApplication=data.user.user_metadata?.seller_application as {business_name?:string;contact_name?:string;phone?:string;address?:string}|undefined;
+    if(seller&&role!=="vendor"&&pendingSellerApplication?.business_name&&pendingSellerApplication.phone&&pendingSellerApplication.address){
+      const {error:activateError}=await supabase.rpc("register_seller_self",{p_business_name:pendingSellerApplication.business_name,p_contact_name:pendingSellerApplication.contact_name||"",p_phone:englishDigits(pendingSellerApplication.phone),p_address:pendingSellerApplication.address});
+      if(activateError)throw activateError;
+      role="vendor";
+    }
     if(role!=="vendor"&&pendingSellerApplication){router.replace("/seller/register");return;}
     if(seller&&role!=="vendor"){router.replace("/seller/register");return;}
     router.replace(admin?"/admin":seller?"/seller/dashboard":await destinationFor(data.user.id));
@@ -78,26 +83,28 @@ export function LoginPage({seller=false,admin=false}:{seller?:boolean;admin?:boo
 }
 export function RegisterPage(){return <Shell title="নতুন অ্যাকাউন্ট" subtitle="HubinBD-তে কেনাকাটা ও সেবা ব্যবহারের জন্য রেজিস্টার করুন।"><AuthFields mode="register"/><p className="mt-5 text-center text-sm text-slate-600">আগে থেকেই অ্যাকাউন্ট আছে? <Link href="/login" className="font-semibold text-blue-700">লগইন</Link></p></Shell>;}
 export function SellerRegisterPage(){
+  const router=useRouter();
   const [shop,setShop]=useState("");const [contact,setContact]=useState("");const [email,setEmail]=useState("");const [password,setPassword]=useState("");const [phone,setPhone]=useState("");const [district,setDistrict]=useState("");const [upazila,setUpazila]=useState("");const [busy,setBusy]=useState(false);const [error,setError]=useState("");const [notice,setNotice]=useState("");
-  useEffect(()=>{let active=true;(async()=>{try{const {data:{user}}=await supabase.auth.getUser();if(!user)return;const meta=user.user_metadata?.seller_application as {business_name?:string;contact_name?:string;phone?:string;address?:string}|undefined;if(!meta?.business_name||!meta?.phone||!meta?.address)return;const {data:existing,error:existingError}=await supabase.from("vendors").select("status").eq("user_id",user.id).maybeSingle();if(existingError)throw existingError;if(existing){if(active)setNotice(existing.status==="approved"?"আপনার Seller আবেদন অনুমোদিত।":"আপনার আবেদন আগে থেকেই জমা আছে। অনুমোদনের অপেক্ষায় থাকুন।");return;}const {error:insertError}=await supabase.from("vendors").insert({user_id:user.id,business_name:meta.business_name,contact_name:meta.contact_name||"",phone:meta.phone,address:meta.address,status:"pending"});if(insertError)throw insertError;if(active)setNotice("ইমেইল ভেরিফিকেশনের পর আপনার Seller আবেদন জমা হয়েছে। Admin অনুমোদনের অপেক্ষায় থাকুন।");}catch(err){if(active)setError(message(err));}})();return()=>{active=false;};},[]);
-  async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();setBusy(true);setError("");setNotice("");try{
-    const normalizedPhone=englishDigits(phone).trim();if(!normalizedPhone)throw new Error("মোবাইল নম্বর দিন।");
+  async function activateSeller(userId:string){
     const address=[upazila.trim(),district.trim()].filter(Boolean).join(", ");
-    const application={business_name:shop.trim(),contact_name:contact.trim(),phone:normalizedPhone,address};
-    const {data:{user:currentUser},error:currentUserError}=await supabase.auth.getUser();if(currentUserError)throw currentUserError;
-    let user=currentUser;
-    if(!user){
-      const {data:signup,error:signupError}=await supabase.auth.signUp({email:email.trim(),password,options:{data:{full_name:contact.trim(),seller_application:application}}});if(signupError)throw signupError;
-      if(!signup.user)throw new Error("অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।");
-      if(!signup.session){setNotice("অ্যাকাউন্ট তৈরি হয়েছে। ইমেইল verification সম্পন্ন করুন, তারপর Seller Login করুন। লগইনের পর আপনার আবেদন স্বয়ংক্রিয়ভাবে জমা হবে।");return;}
-      user=signup.user;
-    }
-    const {data:existing,error:existingError}=await supabase.from("vendors").select("status").eq("user_id",user.id).maybeSingle();if(existingError)throw existingError;
-    if(existing){setNotice(existing.status==="approved"?"আপনার Seller অ্যাকাউন্ট অনুমোদিত।":"আপনার আবেদন আগে থেকেই জমা আছে। অনুমোদনের অপেক্ষায় থাকুন।");return;}
-    const {error:insertError}=await supabase.from("vendors").insert({user_id:user.id,...application,status:"pending"});
-    if(insertError)throw insertError;setNotice("আপনার Seller আবেদন জমা হয়েছে। Admin অনুমোদনের অপেক্ষায় থাকুন।");
+    const {error:registerError}=await supabase.rpc("register_seller_self",{p_business_name:shop.trim(),p_contact_name:contact.trim(),p_phone:englishDigits(phone).trim(),p_address:address});
+    if(registerError)throw registerError;
+    router.replace("/seller/dashboard");
+  }
+  async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();setBusy(true);setError("");setNotice("");try{
+    if(!shop.trim()||!contact.trim()||!district.trim()||!upazila.trim())throw new Error("সব তথ্য পূরণ করুন।");
+    const {data:{user:existingUser},error:currentError}=await supabase.auth.getUser();if(currentError)throw currentError;
+    if(existingUser){await activateSeller(existingUser.id);return;}
+    const application={business_name:shop.trim(),contact_name:contact.trim(),phone:englishDigits(phone).trim(),address:[upazila.trim(),district.trim()].filter(Boolean).join(", ")};
+    const {data,error:signupError}=await supabase.auth.signUp({email:email.trim(),password,options:{data:{full_name:contact.trim(),phone:application.phone,address:application.address,seller_application:application}}});
+    if(signupError)throw signupError;
+    if(!data.user)throw new Error("অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।");
+    if(!data.session){setNotice("অ্যাকাউন্ট তৈরি হয়েছে। ইমেইল ভেরিফিকেশন সম্পন্ন করে Seller Login করুন। লগইনের পর Seller Account স্বয়ংক্রিয়ভাবে চালু হবে; Admin Approval লাগবে না।");return;}
+    const {error:registerError}=await supabase.rpc("register_seller_self",{p_business_name:application.business_name,p_contact_name:application.contact_name,p_phone:application.phone,p_address:application.address});
+    if(registerError)throw registerError;
+    router.replace("/seller/dashboard");
   }catch(err){setError(message(err));}finally{setBusy(false);}}
-  return <Shell title="Seller Registration" subtitle="অ্যাকাউন্ট তৈরি করে দোকানের তথ্য দিয়ে বিক্রেতা হওয়ার আবেদন করুন।"><form onSubmit={submit} className="space-y-4">
+  return <Shell title="Seller Registration" subtitle="দোকানের তথ্য দিয়ে Seller Account তৈরি করুন। রেজিস্ট্রেশন সম্পন্ন হলেই অ্যাকাউন্ট চালু হবে; Admin Approval প্রয়োজন নেই।"><form onSubmit={submit} className="space-y-4">
     <label className="block text-sm font-medium">আপনার নাম<input required value={contact} onChange={e=>setContact(e.target.value)} className={inputClass+" mt-1.5"} autoComplete="name"/></label>
     <label className="block text-sm font-medium">ইমেইল<input required type="email" value={email} onChange={e=>setEmail(e.target.value)} className={inputClass+" mt-1.5"} autoComplete="email"/></label>
     <label className="block text-sm font-medium">পাসওয়ার্ড<input required minLength={6} type="password" value={password} onChange={e=>setPassword(e.target.value)} className={inputClass+" mt-1.5"} autoComplete="new-password"/></label>
@@ -106,7 +113,7 @@ export function SellerRegisterPage(){
     <label className="block text-sm font-medium">জেলা<input required value={district} onChange={e=>setDistrict(e.target.value)} className={inputClass+" mt-1.5"}/></label>
     <label className="block text-sm font-medium">উপজেলা<input required value={upazila} onChange={e=>setUpazila(e.target.value)} className={inputClass+" mt-1.5"}/></label>
     {error&&<p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}{notice&&<p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">{notice}</p>}
-    <button disabled={busy} className={buttonClass}>{busy?"অ্যাকাউন্ট তৈরি হচ্ছে...":"অ্যাকাউন্ট তৈরি ও আবেদন জমা দিন"}</button>
+    <button disabled={busy} className={buttonClass}>{busy?"অ্যাকাউন্ট তৈরি হচ্ছে...":"Seller Account তৈরি করুন"}</button>
   </form><p className="mt-5 text-center text-sm text-slate-600">আগে থেকেই অ্যাকাউন্ট আছে? <Link href="/seller/login" className="font-semibold text-blue-700">Seller Login</Link></p></Shell>;
 }
 export function SellerDashboardPage(){
