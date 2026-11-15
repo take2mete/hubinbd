@@ -25,9 +25,9 @@ export default function AdminUsersPage() {
     setBusy("");
   }
 
-  async function setVerification(row: UserRow) {
+  async function setVerification(row: UserRow, nextVerified: boolean) {
     setBusy(row.user_id); setError("");
-    const { error: verifyError } = await supabase.rpc("admin_set_user_verification", { p_user_id: row.user_id, p_is_verified: !row.is_verified });
+    const { error: verifyError } = await supabase.rpc("admin_set_user_verification", { p_user_id: row.user_id, p_is_verified: nextVerified });
     if (verifyError) setError(verifyError.message); else await load();
     setBusy("");
   }
@@ -56,7 +56,7 @@ export default function AdminUsersPage() {
       <thead className="bg-slate-100"><tr><th className="p-3">ইমেইল</th><th className="p-3">অ্যাকাউন্ট</th><th className="p-3">বর্তমান রোল</th><th className="p-3">ভেরিফিকেশন</th><th className="p-3">রোল পরিবর্তন</th><th className="p-3">অ্যাকশন</th></tr></thead>
       <tbody>{rows.map(row => { const protectedRole = ["owner_admin","admin","sub_admin"].includes(row.role); return <tr key={row.user_id} className="border-t">
         <td className="p-3">{row.email || "—"}</td><td className="p-3">{row.account_type === "seller" ? "Seller" : row.account_type === "admin" ? "Admin" : "Customer"}</td><td className="p-3 font-semibold">{row.role}</td>
-        <td className="p-3"><button type="button" disabled={busy===row.user_id || protectedRole} onClick={()=>void setVerification(row)} className={`rounded-lg px-3 py-2 font-semibold text-white disabled:opacity-40 ${row.is_verified?"bg-amber-600 hover:bg-amber-700":"bg-emerald-600 hover:bg-emerald-700"}`}>{busy===row.user_id?"অপেক্ষা করুন…":row.is_verified?"Unverify":"Verify"}</button><span className={`ml-2 text-xs font-semibold ${row.is_verified?"text-emerald-700":"text-amber-700"}`}>{row.is_verified?"Verified":"Unverified"}</span></td>
+        <td className="p-3"><select aria-label={`${row.email || "User"} verification status`} disabled={busy===row.user_id || protectedRole} value={row.is_verified?"verified":"unverified"} onChange={event=>void setVerification(row,event.target.value==="verified")} className={`min-w-36 cursor-pointer rounded-lg border px-3 py-2 font-semibold shadow-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 ${row.is_verified?"border-emerald-300 bg-emerald-50 text-emerald-800":"border-amber-300 bg-amber-50 text-amber-800"}`}><option value="verified">✓ Verified</option><option value="unverified">● Unverified</option></select>{busy===row.user_id&&<span className="ml-2 text-xs text-slate-500">সেভ হচ্ছে…</span>}</td>
         <td className="p-3"><select aria-label={row.email||"User role"} disabled={busy===row.user_id || row.role==="owner_admin"} value={row.role} onChange={event=>void changeRole(row.user_id,event.target.value)} className="rounded-lg border p-2"><option value="customer">customer</option><option value="vendor">vendor (সেলার)</option><option value="admin">admin</option><option value="sub_admin">sub_admin</option></select></td>
         <td className="p-3"><button type="button" disabled={busy===row.user_id || protectedRole} onClick={()=>void deleteUser(row)} className="rounded-lg bg-red-600 px-3 py-2 font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40">{busy===row.user_id?"অপেক্ষা করুন…":"ডিলিট"}</button></td>
       </tr>; })}{rows.length===0&&<tr><td colSpan={6} className="p-6 text-center text-slate-500">কোনো ব্যবহারকারী পাওয়া যায়নি।</td></tr>}</tbody>
