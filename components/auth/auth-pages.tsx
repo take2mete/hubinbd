@@ -93,8 +93,8 @@ export function SellerRegisterPage(){
   }
   async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();setBusy(true);setError("");setNotice("");try{
     if(!shop.trim()||!contact.trim()||!district.trim()||!upazila.trim())throw new Error("সব তথ্য পূরণ করুন।");
-    const {data:{user:existingUser},error:currentError}=await supabase.auth.getUser();if(currentError)throw currentError;
-    if(existingUser){await activateSeller();return;}
+    const {data:{session},error:sessionError}=await supabase.auth.getSession();if(sessionError)throw sessionError;
+    if(session?.user){await activateSeller();return;}
     const application={business_name:shop.trim(),contact_name:contact.trim(),phone:englishDigits(phone).trim(),address:[upazila.trim(),district.trim()].filter(Boolean).join(", ")};
     const {data,error:signupError}=await supabase.auth.signUp({email:email.trim(),password,options:{data:{full_name:contact.trim(),phone:application.phone,address:application.address,seller_application:application}}});
     if(signupError)throw signupError;
