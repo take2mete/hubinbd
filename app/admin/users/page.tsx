@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
-type UserRow = { user_id: string; email: string | null; role: string; created_at: string };
+type UserRow = { user_id: string; email: string | null; role: string; created_at: string; is_verified: boolean; account_type: "seller" | "customer" };
 
 export default function AdminUsersPage() {
   const [rows, setRows] = useState<UserRow[]>([]);
@@ -33,7 +33,7 @@ export default function AdminUsersPage() {
     setBusy("");
   }
 
-  async function deleteUser(row: UserRow) {
+  async function setVerification(row: UserRow) {\n    setBusy(row.user_id); setError("");\n    const { error: verifyError } = await supabase.rpc("admin_set_user_verification", { p_user_id: row.user_id, p_is_verified: !row.is_verified });\n    if (verifyError) setError(verifyError.message); else await load();\n    setBusy("");\n  }\n\n  async function deleteUser(row: UserRow) {
     const label = row.email || row.user_id;
     if (!window.confirm(`আপনি কি নিশ্চিতভাবে ${label} অ্যাকাউন্টটি ডিলিট করতে চান? এই কাজটি ফিরিয়ে আনা যাবে না।`)) return;
     setBusy(row.user_id);
@@ -66,21 +66,21 @@ export default function AdminUsersPage() {
         <a href="/admin" className="text-sm text-blue-700">← Admin Dashboard</a>
         <h1 className="my-5 text-3xl font-black">ব্যবহারকারী ও রোল ব্যবস্থাপনা</h1>
         <p className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          শুধুমাত্র Owner Admin রোল পরিবর্তন ও অ্যাকাউন্ট ডিলিট করতে পারবেন। Owner Admin অ্যাকাউন্ট সুরক্ষার জন্য এখানে পরিবর্তন বা ডিলিট করা যাবে না। সেলার রোল দিতে হলে অনুমোদিত সেলার আবেদন থাকতে হবে।
+          শুধুমাত্র Owner Admin সেলার ও কাস্টমার অ্যাকাউন্ট Verify / Unverify করতে পারবেন। Unverify করলে অ্যাকাউন্ট ডিলিট হবে না; অর্ডার, পণ্য প্রকাশ, বিক্রির মতো অনুমোদিত কাজ বন্ধ থাকবে। Admin রোল অক্ষত থাকবে।
         </p>
         {error && <p role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         {loading ? <p className="rounded-xl bg-white p-5">লোড হচ্ছে…</p> : (
           <div className="overflow-x-auto rounded-2xl border bg-white">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-100"><tr>
-                <th className="p-3">ইমেইল</th><th className="p-3">বর্তমান রোল</th><th className="p-3">রোল পরিবর্তন</th><th className="p-3">অ্যাকশন</th>
+                <th className="p-3">ইমেইল</th><th className="p-3">অ্যাকাউন্ট</th><th className="p-3">রোল</th><th className="p-3">ভেরিফিকেশন</th><th className="p-3">রোল পরিবর্তন</th><th className="p-3">অ্যাকশন</th>
               </tr></thead>
               <tbody>
                 {rows.map((row) => {
                   const protectedRole = ["owner_admin", "admin", "sub_admin"].includes(row.role);
                   return <tr key={row.user_id} className="border-t">
                     <td className="p-3">{row.email || "—"}</td>
-                    <td className="p-3 font-semibold">{row.role}</td>
+                    <td className="p-3">{row.account_type === "seller" ? "Seller" : "Customer"}</td>\n                    <td className="p-3 font-semibold">{row.role}</td>
                     <td className="p-3">
                       <select aria-label={row.email || "User role"} disabled={busy === row.user_id || row.role === "owner_admin"} value={row.role}
                         onChange={(event) => void changeRole(row.user_id, event.target.value)} className="rounded-lg border p-2">
@@ -97,7 +97,7 @@ export default function AdminUsersPage() {
                     </td>
                   </tr>;
                 })}
-                {rows.length === 0 && <tr><td colSpan={4} className="p-6 text-center text-slate-500">কোনো ব্যবহারকারী পাওয়া যায়নি।</td></tr>}
+                {rows.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-slate-500">কোনো ব্যবহারকারী পাওয়া যায়নি।</td></tr>}
               </tbody>
             </table>
           </div>
