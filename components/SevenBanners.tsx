@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { bannerDefaults } from "@/lib/banners";
 import { supabase } from "@/lib/supabase/client";
 
-export default function SevenBanners() {
+export default function SevenBanners({ compactBottom = false }: { compactBottom?: boolean }) {
   const [items, setItems] = useState(bannerDefaults);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export default function SevenBanners() {
   return (
     <section
       aria-label="HubinBD featured banners"
-      className="mx-auto my-4 max-w-7xl rounded-2xl bg-[#111] p-1 sm:my-7 sm:rounded-3xl sm:p-2"
+      className={`mx-auto ${compactBottom ? "mt-4 mb-0 sm:mt-7 sm:mb-0" : "my-4 sm:my-7"} max-w-7xl rounded-2xl bg-[#111] p-1 sm:rounded-3xl sm:p-2`}
     >
       <div className="grid grid-cols-[1.15fr_1fr] items-center gap-1.5 sm:items-stretch sm:gap-2 lg:grid-cols-[58fr_42fr]">
         {[hero, services, tools].map((item, index) => {
