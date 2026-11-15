@@ -45,14 +45,14 @@ export default function SellerPublicStore() {
   useEffect(() => {
     let active = true;
     async function load() {
-      const [sellerResult, productResult] = await Promise.all([
-        supabase.from("vendors").select("user_id,business_name,status").eq("user_id", sellerId).eq("status", "approved").maybeSingle(),
-        supabase.from("products").select("id,name,name_bn,image_urls,price,old_price,category,stock,sold").eq("vendor_id", sellerId).eq("is_active", true).eq("status", "Approved").order("created_at", { ascending: false }),
-      ]);
+      const { data, error: storeError } = await supabase.rpc("get_public_seller_store", { p_seller_id: sellerId });
       if (!active) return;
-      if (sellerResult.error || productResult.error) setError("স্টোরের তথ্য লোড করা যাচ্ছে না।");
-      else if (!sellerResult.data) setError("এই সেলার স্টোরটি পাওয়া যায়নি অথবা বর্তমানে অনুমোদিত নয়।");
-      else { setSeller(sellerResult.data as Seller); setProducts((productResult.data || []) as Product[]); }
+      if (storeError) setError("স্টোরের তথ্য লোড করা যাচ্ছে না।");
+      else if (!data?.seller) setError("এই সেলার স্টোরটি পাওয়া যায়নি অথবা বর্তমানে অনুমোদিত নয়।");
+      else {
+        setSeller(data.seller as Seller);
+        setProducts((data.products || []) as Product[]);
+      }
       setLoading(false);
     }
     if (sellerId) void load();
