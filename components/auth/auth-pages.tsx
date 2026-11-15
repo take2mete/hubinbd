@@ -85,7 +85,7 @@ export function RegisterPage(){return <Shell title="নতুন অ্যাক
 export function SellerRegisterPage(){
   const router=useRouter();
   const [shop,setShop]=useState("");const [contact,setContact]=useState("");const [email,setEmail]=useState("");const [password,setPassword]=useState("");const [phone,setPhone]=useState("");const [district,setDistrict]=useState("");const [upazila,setUpazila]=useState("");const [busy,setBusy]=useState(false);const [error,setError]=useState("");const [notice,setNotice]=useState("");
-  async function activateSeller(userId:string){
+  async function activateSeller(){
     const address=[upazila.trim(),district.trim()].filter(Boolean).join(", ");
     const {error:registerError}=await supabase.rpc("register_seller_self",{p_business_name:shop.trim(),p_contact_name:contact.trim(),p_phone:englishDigits(phone).trim(),p_address:address});
     if(registerError)throw registerError;
@@ -94,7 +94,7 @@ export function SellerRegisterPage(){
   async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();setBusy(true);setError("");setNotice("");try{
     if(!shop.trim()||!contact.trim()||!district.trim()||!upazila.trim())throw new Error("সব তথ্য পূরণ করুন।");
     const {data:{user:existingUser},error:currentError}=await supabase.auth.getUser();if(currentError)throw currentError;
-    if(existingUser){await activateSeller(existingUser.id);return;}
+    if(existingUser){await activateSeller();return;}
     const application={business_name:shop.trim(),contact_name:contact.trim(),phone:englishDigits(phone).trim(),address:[upazila.trim(),district.trim()].filter(Boolean).join(", ")};
     const {data,error:signupError}=await supabase.auth.signUp({email:email.trim(),password,options:{data:{full_name:contact.trim(),phone:application.phone,address:application.address,seller_application:application}}});
     if(signupError)throw signupError;
