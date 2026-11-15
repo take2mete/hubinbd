@@ -49,6 +49,7 @@ export default function SellerDashboard(){
   await load(uid);setBusy(false);toast(ok+"টি পণ্যে ৫% ছাড় প্রয়োগ হয়েছে।"+(failed.length?" ব্যর্থ: "+failed.length:""));if(failed.length)console.error("Bulk discount errors",failed);
  }
  async function uploadToMedia(file?:File){
+  if(!isVerified){toast("Seller Account Verify না হওয়া পর্যন্ত ছবি আপলোড বন্ধ থাকবে।");return}
   if(!file)return;
   if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5*1024*1024){toast("JPG, PNG বা WebP ছবি দিন (সর্বোচ্চ ৫ MB)।");return}
   setBusy(true);
