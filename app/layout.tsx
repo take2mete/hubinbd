@@ -6,7 +6,7 @@ import DeferredAdPlacementRenderer from "@/components/deferred-ad-placement-rend
 
 const hindSiliguri = Hind_Siliguri({
   subsets: ["latin", "bengali"],
-  weight: ["400", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-hind-siliguri",
 });
