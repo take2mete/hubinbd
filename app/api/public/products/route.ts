@@ -52,7 +52,7 @@ const cachedPublicProducts = unstable_cache(
     if (mode === "search") {
       if (query) {
         // Remove PostgREST filter syntax characters from user input.
-        const safeQuery = query.replace(/[^\\p{L}\\p{N}\\s._-]/gu, " ").replace(/\\s+/g, " ").trim().slice(0, 80);
+        const safeQuery = query.replace(/[(),.%_*]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
         if (safeQuery) request = request.or("name.ilike.%"+safeQuery+"%,name_bn.ilike.%"+safeQuery+"%");
       }
       if (category === "clothing") request = request.ilike("category", "%জামা%");
