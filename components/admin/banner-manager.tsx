@@ -208,7 +208,7 @@ export default function BannerManager() {
             <section key={item.slot} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 text-zinc-100">
               <h3 className="font-bold">{index + 1}. {item.title}</h3>
               <div className={"relative mt-3 w-full overflow-hidden rounded-xl bg-zinc-800 " + (index === 0 ? "aspect-[3.4/1]" : "aspect-[4.34/1]")}>
-                {item.image_url && <Image src={item.image_url} alt={item.title} fill unoptimized className="object-contain" />}
+                {item.image_url && <Image src={item.image_url} alt={item.title} fill sizes="(max-width: 768px) 100vw, 560px" className="object-contain" />}
               </div>
               <label className="mt-3 block text-xs text-zinc-400">ছবি (JPG / PNG / WebP, সর্বোচ্চ ৫ MB)
                 <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingSlot !== null} onChange={(event) => { void upload(item.slot, event.target.files?.[0]); event.currentTarget.value = ""; }} className="mt-2 w-full text-xs" />
