@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { bannerDefaults } from "@/lib/banners";
+import { getClientCached } from "@/lib/client-query-cache";
 import { supabase } from "@/lib/supabase/client";
 
 export default function SevenBanners({ compactBottom = false }: { compactBottom?: boolean }) {
@@ -12,18 +13,26 @@ export default function SevenBanners({ compactBottom = false }: { compactBottom?
   useEffect(() => {
     let active = true;
     void (async () => {
-      const { data, error } = await supabase
-        .from("banners")
-        .select("slot,image_url,link_url,title")
-        .in("slot", bannerDefaults.map((item) => item.slot))
-        .order("slot");
+      try {
+        const data = await getClientCached("hubinbd:banners:v1", async () => {
+          const { data, error } = await supabase
+            .from("banners")
+            .select("slot,image_url,link_url,title")
+            .in("slot", bannerDefaults.map((item) => item.slot))
+            .order("slot");
+          if (error) throw error;
+          return data ?? [];
+        }, 60_000);
 
-      if (active && !error && data) {
-        setItems(
-          bannerDefaults.map(
-            (item) => data.find((row) => row.slot === item.slot) ?? item,
-          ),
-        );
+        if (active) {
+          setItems(
+            bannerDefaults.map(
+              (item) => data.find((row) => row.slot === item.slot) ?? item,
+            ),
+          );
+        }
+      } catch {
+        // Keep the bundled banner defaults when the network request fails.
       }
     })();
 
