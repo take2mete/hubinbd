@@ -2,7 +2,7 @@
  * Central HubinBD image optimizer.
  * Converts JPEG, PNG (including transparent PNG), and WebP to compressed WebP.
  * Defaults: max edge 1600px, target 250KB, quality 0.82 down to 0.55.
- * SVG/GIF and other unsupported formats are intentionally left unchanged.
+ * SVG/GIF and other unsupported formats are rejected with a clear error.
  */
 export type ImageOptimizationOptions = {
   maxDimension?: number;
@@ -27,9 +27,9 @@ export async function convertToWebP(
   const initialQuality = options.initialQuality ?? 0.82;
   const minQuality = options.minQuality ?? 0.55;
   const safeBase = (file.name || "image")
-    .normalize("NFKC").trim().toLowerCase().replace(/\\s+/g, "-")
+    .normalize("NFKC").trim().toLowerCase().replace(/\s+/g, "-")
     .replace(/[^a-z0-9._-]/g, "-").replace(/-+/g, "-")
-    .replace(/^-|-$/g, "").replace(/\\.(jpe?g|png|webp)$/i, "") || "image";
+    .replace(/^-|-$/g, "").replace(/\.(jpe?g|png|webp)$/i, "") || "image";
 
   const objectUrl = URL.createObjectURL(file);
   try {
