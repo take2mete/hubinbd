@@ -2,7 +2,7 @@
  * Central HubinBD image optimizer.
  * Converts JPEG, PNG (including transparent PNG), and WebP to compressed WebP.
  * Defaults: max edge 1600px, target 250KB, quality 0.82 down to 0.55.
- * SVG/GIF and other unsupported formats are intentionally left unchanged.
+ * SVG/GIF and other unsupported formats are rejected with a clear error.
  */
 export type ImageOptimizationOptions = {
   maxDimension?: number;
