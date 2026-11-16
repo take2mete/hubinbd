@@ -5,6 +5,22 @@ import { supabase } from "@/lib/supabase/client";
 
 type ImageItem = { bucket: string; path: string; mime: string; bytes: number };
 type Result = { bucket: string; sourcePath: string; outputPath?: string; sourceBytes?: number; outputBytes?: number; error?: string; databaseErrors?: string[]; databaseUpdated?: boolean };
+type CleanupItem = { bucket: string; path: string; state: "unchecked" | "safe" | "blocked" | "deleted" | "error"; detail?: string };
+const LEGACY_IMAGES: Array<{bucket:string;path:string}> = [
+{bucket:"banner-images",path:"ad-banners/banner-1794586215830-ohhko3.webp"},
+{bucket:"banner-images",path:"ad-banners/banner-1794588885729-smuyi5.webp"},
+{bucket:"banner-images",path:"ad-banners/banner-1794589034726-ml9m3f.webp"},
+{bucket:"banner-images",path:"ad-banners/banner-1794589560076-mdswqs.webp"},
+{bucket:"product-images",path:"admin/1794073416760-Copilot_20260718_211849.png"},
+{bucket:"product-images",path:"admin/1794413381862-________.png"},
+{bucket:"product-images",path:"eef89e5d-a875-4cf1-a0cb-8186672123a4/1794072284588-f5n66p03vzk.png"},
+{bucket:"product-images",path:"eef89e5d-a875-4cf1-a0cb-8186672123a4/1794072285799-a01ei1albp.png"},
+{bucket:"product-images",path:"eef89e5d-a875-4cf1-a0cb-8186672123a4/1794072286817-wj5b5tx4h9k.png"},
+{bucket:"product-images",path:"eef89e5d-a875-4cf1-a0cb-8186672123a4/1794410515773-nu6iohsdvhc.png"},
+{bucket:"product-images",path:"eef89e5d-a875-4cf1-a0cb-8186672123a4/1794410531532-bvnkxs8utum.png"},
+{bucket:"site-assets",path:"logo.png"},
+{bucket:"site-assets",path:"online-rental-car-bangladesh-cars-hubinbd.jpg"},
+];
 
 function size(value: number) {
   if (!value) return "—";
@@ -17,7 +33,7 @@ export default function ImageMigrationPage() {
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState("");
-  const [done, setDone] = useState(0);
+  const [done, setDone] = useState(0);\n  const [cleanup, setCleanup] = useState<CleanupItem[]>(LEGACY_IMAGES.map(x => ({...x,state:"unchecked"})));\n  const [checkingCleanup, setCheckingCleanup] = useState(false);
 
   const request = useCallback(async (body: Record<string, unknown>) => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -77,6 +93,18 @@ export default function ImageMigrationPage() {
         {running && <div className="mb-4 h-2 overflow-hidden rounded bg-gray-200"><div className="h-full bg-blue-600 transition-all" style={{ width: `${items.length ? done / items.length * 100 : 0}%` }} /></div>}
         <div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left text-sm"><thead><tr className="border-b text-gray-500"><th className="p-2">Bucket</th><th className="p-2">ফাইল</th><th className="p-2">বর্তমান MIME</th><th className="p-2 text-right">সাইজ</th></tr></thead><tbody>{items.map((item) => <tr key={item.bucket + item.path} className="border-b last:border-0"><td className="p-2">{item.bucket}</td><td className="max-w-[360px] break-all p-2">{item.path}</td><td className="p-2">{item.mime || "অজানা"}</td><td className="p-2 text-right tabular-nums">{size(item.bytes)}</td></tr>)}</tbody></table></div>
         {!items.length && !loading && <p className="p-6 text-center text-sm text-gray-500">কোনো পুরোনো ফাইল পাওয়া যায়নি।</p>}
+      </section>
+      <section className="rounded-xl border border-red-200 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div><h2 className="font-semibold">পুরোনো ১৩টি Original Image Cleanup</h2><p className="mt-1 text-sm text-gray-500">প্রতিটি ফাইলের WebP কপি ও Database Reference পুনরায় যাচাই করে তারপর আলাদাভাবে Delete করুন।</p></div>
+          <button onClick={checkCleanup} disabled={checkingCleanup || running} className="rounded-lg border px-4 py-2 text-sm font-semibold disabled:opacity-50">{checkingCleanup ? "যাচাই চলছে…" : "১৩টি ফাইল পুনরায় যাচাই"}</button>
+        </div>
+        <div className="mt-3 space-y-2">{cleanup.map(item=><div key={item.bucket+item.path} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-gray-50 p-3 text-sm">
+          <div className="min-w-0 flex-1"><div className="break-all font-medium">{item.path}</div><div className="mt-1 text-xs text-gray-500">{item.bucket} · {item.detail ?? "এখনো যাচাই হয়নি"}</div></div>
+          <div className="flex items-center gap-2"><span className={item.state==="safe"?"text-green-700":item.state==="deleted"?"text-gray-500":item.state==="blocked"||item.state==="error"?"text-red-700":"text-gray-500"}>{item.state==="safe"?"নিরাপদ":item.state==="deleted"?"মুছে ফেলা হয়েছে":item.state==="blocked"?"Reference পাওয়া গেছে":item.state==="error"?"ত্রুটি":"অপেক্ষমাণ"}</span>
+          {item.state==="safe" && <button onClick={()=>deleteOriginal(item)} className="rounded bg-red-600 px-3 py-1.5 font-semibold text-white">Delete Original</button>}</div>
+        </div>)}</div>
+        <p className="mt-3 text-xs text-gray-500">Delete করার আগে Edge Function WebP ফাইলটি ডাউনলোড করে যাচাই করে এবং পরিচিত Database টেবিলে Original URL খোঁজে। কোনো স্ক্যান ব্যর্থ হলে Delete বন্ধ থাকবে।</p>
       </section>
       {results.length > 0 && <section className="rounded-xl border p-4"><h2 className="mb-3 font-semibold">ফলাফল ({results.length})</h2><div className="space-y-2">{results.map((r) => <div key={r.bucket + r.sourcePath} className="rounded-lg bg-gray-50 p-3 text-sm"><div className="font-medium break-all">{r.sourcePath}</div>{r.error ? <p className="mt-1 text-red-700">ব্যর্থ: {r.error}</p> : <><p className="mt-1 text-green-700">WebP: {r.outputPath} · {size(r.sourceBytes ?? 0)} → {size(r.outputBytes ?? 0)}</p>{r.databaseErrors?.length ? <p className="text-amber-700">DB আপডেট অসম্পূর্ণ: {r.databaseErrors.join(" | ")}</p> : <p className="text-green-700">মিল থাকা ডাটাবেস URL আপডেট হয়েছে।</p>}</>}</div>)}</div></section>}
     </main>
