@@ -20,7 +20,7 @@ export default function DeferredAdPlacementRenderer() {
       if (!cancelled) setReady(true);
     };
 
-    if ("requestIdleCallback" in window) {
+    if (typeof window.requestIdleCallback === "function") {
       idleId = window.requestIdleCallback(activate, { timeout: 2500 });
     } else {
       timeoutId = window.setTimeout(activate, 1200);
@@ -28,7 +28,7 @@ export default function DeferredAdPlacementRenderer() {
 
     return () => {
       cancelled = true;
-      if (idleId !== undefined && "cancelIdleCallback" in window) {
+      if (idleId !== undefined && typeof window.cancelIdleCallback === "function") {
         window.cancelIdleCallback(idleId);
       }
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
