@@ -48,7 +48,6 @@ export default function SevenBanners({ compactBottom = false }: { compactBottom?
               alt={item.title}
               fill
               priority={isHero}
-              unoptimized
               sizes={isHero ? "(max-width: 1024px) 54vw, 58vw" : "(max-width: 1024px) 42vw, 42vw"}
               className="object-contain transition-transform duration-300 group-hover:scale-[1.02]"
             />
