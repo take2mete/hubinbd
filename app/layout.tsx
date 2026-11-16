@@ -2,25 +2,41 @@ import type { Metadata } from "next";
 import { Hind_Siliguri } from "next/font/google";
 import "./globals.css";
 import AffiliateReferralTracker from "@/components/affiliate-referral-tracker";
-import AdPlacementRenderer from "@/components/ad-placement-renderer";
+import DeferredAdPlacementRenderer from "@/components/deferred-ad-placement-renderer";
 
 const hindSiliguri = Hind_Siliguri({
   subsets: ["latin", "bengali"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "600", "700"],
   display: "swap",
   variable: "--font-hind-siliguri",
 });
 
 export const metadata: Metadata = {
- metadataBase: new URL("https://www.hubinbd.com"),
- title: { default: "HubinBD — বাংলাদেশের অনলাইন শপিং ও ডিজিটাল সার্ভিস", template: "%s | HubinBD" },
- description: "HubinBD-তে পোশাক, অনলাইন টুলস এবং কম্পিউটার ওয়ার্ক সার্ভিস খুঁজুন।",
- applicationName: "HubinBD",
- keywords: ["HubinBD","Bangladesh online shopping","অনলাইন শপিং","PDF Tools","Computer Work"],
- alternates: { canonical: "/" },
- openGraph: { type:"website",title:"HubinBD",description:"বাংলাদেশের অনলাইন শপিং ও ডিজিটাল সার্ভিস হাব।",url:"https://www.hubinbd.com",siteName:"HubinBD",locale:"bn_BD" },
- robots: { index:true,follow:true },
+  metadataBase: new URL("https://www.hubinbd.com"),
+  title: { default: "HubinBD — বাংলাদেশের অনলাইন শপিং ও ডিজিটাল সার্ভিস", template: "%s | HubinBD" },
+  description: "HubinBD-তে পোশাক, অনলাইন টুলস এবং কম্পিউটার ওয়ার্ক সার্ভিস খুঁজুন।",
+  applicationName: "HubinBD",
+  keywords: ["HubinBD", "Bangladesh online shopping", "অনলাইন শপিং", "PDF Tools", "Computer Work"],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    title: "HubinBD",
+    description: "বাংলাদেশের অনলাইন শপিং ও ডিজিটাল সার্ভিস হাব।",
+    url: "https://www.hubinbd.com",
+    siteName: "HubinBD",
+    locale: "bn_BD",
+  },
+  robots: { index: true, follow: true },
 };
-export default function RootLayout({children}:{children:React.ReactNode}) {
- return <html lang="bn" className={hindSiliguri.variable}><body><AffiliateReferralTracker /><AdPlacementRenderer />{children}</body></html>;
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="bn" className={hindSiliguri.variable}>
+      <body>
+        <AffiliateReferralTracker />
+        <DeferredAdPlacementRenderer />
+        {children}
+      </body>
+    </html>
+  );
 }
