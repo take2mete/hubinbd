@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
-import { supabase } from "@/lib/supabase/client";
 
 type Product = { id: number; name: string; name_bn: string | null; price: number; image_urls: string[] | null; category: string };
 
@@ -27,19 +26,18 @@ function SearchResults() {
   let active=true;
   async function run(){
    setLoading(true);setError("");
-   let request=supabase.from("products").select("id,name,name_bn,price,image_urls,category").eq("is_active",true).eq("status","Approved").order("created_at",{ascending:false}).limit(60);
-   if(query)request=request.or("name.ilike.%"+query+"%,name_bn.ilike.%"+query+"%");
-   if(category==="clothing")request=request.ilike("category","%জামা%");
-   if(subCategoryId)request=request.eq("sub_category_id",Number(subCategoryId));
-   else if(mainCategoryId){
-    const {data:subs,error:subError}=await supabase.from("sub_categories").select("id").eq("main_category_id",Number(mainCategoryId)).eq("is_active",true);
-    if(subError){if(active){setError("ক্যাটাগরি অনুযায়ী পণ্য খোঁজা যাচ্ছে না।");setLoading(false)}return}
-    const ids=(subs||[]).map(x=>x.id);
-    if(!ids.length){if(active){setItems([]);setLoading(false)}return}
-    request=request.in("sub_category_id",ids);
-   }
-   const {data,error:e}=await request;
-   if(active){if(e)setError("সার্চ ফলাফল আনা যায়নি। আবার চেষ্টা করুন।");else setItems((data||[]) as Product[]);setLoading(false)}
+   const params=new URLSearchParams({mode:"search",limit:"60"});
+   if(query)params.set("q",query);
+   if(category!=="all")params.set("category",category);
+   if(mainCategoryId)params.set("main_category_id",mainCategoryId);
+   if(subCategoryId)params.set("sub_category_id",subCategoryId);
+   try{
+    const response=await fetch("/api/public/products?"+params.toString());
+    if(!response.ok)throw new Error("Search request failed");
+    const result=await response.json() as {data:Product[]};
+    if(active)setItems(result.data||[]);
+   }catch{if(active)setError("সার্চ ফলাফল আনা যায়নি। আবার চেষ্টা করুন।")}
+   finally{if(active)setLoading(false)}
   }
   void run();
   return ()=>{active=false};
