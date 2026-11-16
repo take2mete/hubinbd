@@ -27,9 +27,9 @@ export async function convertToWebP(
   const initialQuality = options.initialQuality ?? 0.82;
   const minQuality = options.minQuality ?? 0.55;
   const safeBase = (file.name || "image")
-    .normalize("NFKC").trim().toLowerCase().replace(/\\s+/g, "-")
+    .normalize("NFKC").trim().toLowerCase().replace(/\s+/g, "-")
     .replace(/[^a-z0-9._-]/g, "-").replace(/-+/g, "-")
-    .replace(/^-|-$/g, "").replace(/\\.(jpe?g|png|webp)$/i, "") || "image";
+    .replace(/^-|-$/g, "").replace(/\.(jpe?g|png|webp)$/i, "") || "image";
 
   const objectUrl = URL.createObjectURL(file);
   try {
