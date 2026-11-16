@@ -33,7 +33,9 @@ export default function ImageMigrationPage() {
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState("");
-  const [done, setDone] = useState(0);\n  const [cleanup, setCleanup] = useState<CleanupItem[]>(LEGACY_IMAGES.map(x => ({...x,state:"unchecked"})));\n  const [checkingCleanup, setCheckingCleanup] = useState(false);
+  const [done, setDone] = useState(0);
+  const [cleanup, setCleanup] = useState<CleanupItem[]>(LEGACY_IMAGES.map(x => ({ ...x, state: "unchecked" })));
+  const [checkingCleanup, setCheckingCleanup] = useState(false);
 
   const request = useCallback(async (body: Record<string, unknown>) => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -78,6 +80,29 @@ export default function ImageMigrationPage() {
     setRunning(false);
     setMessage(`প্রসেস শেষ: ${next.filter(x => !x.error && x.outputPath).length}টি WebP কপি তৈরি হয়েছে; ${next.filter(x => x.error).length}টিতে সমস্যা। মূল ফাইল রাখা হয়েছে।`);
     await load();
+  };
+
+  const checkCleanup = async () => {
+    setCheckingCleanup(true);
+    const next: CleanupItem[] = [];
+    for (const item of LEGACY_IMAGES) {
+      try {
+        const result = await request({ action: "delete_check", bucket: item.bucket, path: item.path });
+        next.push({ ...item, state: result.mode === "safe_to_delete" ? "safe" : "blocked", detail: result.mode === "safe_to_delete" ? `WebP verified · ${size(result.webpBytes ?? 0)}` : JSON.stringify(result.references ?? result) });
+      } catch (e) { next.push({ ...item, state: "error", detail: e instanceof Error ? e.message : "যাচাই ব্যর্থ" }); }
+      setCleanup([...next, ...LEGACY_IMAGES.slice(next.length).map(x => ({ ...x, state: "unchecked" as const }))]);
+    }
+    setCheckingCleanup(false);
+    setMessage(`যাচাই শেষ: ${next.filter(x => x.state === "safe").length}টি নিরাপদ; ${next.filter(x => x.state !== "safe").length}টি আটকে গেছে।`);
+  };
+  const deleteOriginal = async (item: CleanupItem) => {
+    if (item.state !== "safe" || !window.confirm(`নিশ্চিত করুন: ${item.path} স্থায়ীভাবে মুছে ফেলবেন? WebP কপি রাখা হবে।`)) return;
+    try {
+      const result = await request({ action: "delete_original", bucket: item.bucket, path: item.path, confirm: true });
+      setCleanup(current => current.map(x => x.bucket === item.bucket && x.path === item.path ? { ...x, state: result.deleted ? "deleted" : "error", detail: result.deleted ? "মুছে ফেলা ও যাচাই সম্পন্ন" : "Delete যাচাই হয়নি" } : x));
+      setMessage(result.deleted ? "Original মুছে ফেলা হয়েছে; WebP অক্ষত আছে।" : "Delete যাচাই করা যায়নি।");
+      await load();
+    } catch (e) { setCleanup(current => current.map(x => x.bucket === item.bucket && x.path === item.path ? { ...x, state: "error", detail: e instanceof Error ? e.message : "Delete ব্যর্থ" } : x)); }
   };
 
   return (
