@@ -20,9 +20,12 @@ type PublicProduct = {
 const cachedPublicProducts = unstable_cache(
   async (cacheKey: string): Promise<PublicProduct[]> => {
     const params = new URLSearchParams(cacheKey);
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !key) throw new Error("Supabase public environment is not configured");
+    if (!configuredUrl || !key) throw new Error("Supabase public environment is not configured");
+    // Supabase createClient expects the project root URL, not a URL already
+    // ending in /rest/v1. Normalize both forms to prevent /rest/v1/rest/v1.
+    const url = configuredUrl.trim().replace(/\/rest\/v1\/?$/i, "").replace(/\/+$/, "");
 
     // Use only the public anon key. RLS remains the source of authorization;
     // this endpoint never uses service_role or returns private seller/customer data.
