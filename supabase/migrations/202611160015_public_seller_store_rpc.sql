@@ -1,5 +1,6 @@
--- Public seller storefront: expose only approved seller identity and approved active products.
--- This RPC bypasses table RLS safely while returning a strict, non-sensitive field allowlist.
+-- Public seller storefront: expose only approved AND admin-verified seller identity
+-- and their approved active products. Keep this migration aligned with production.
+-- The RPC bypasses table RLS, so its returned fields and eligibility checks are strict.
 create or replace function public.get_public_seller_store(p_seller_id uuid)
 returns jsonb
 language sql
@@ -12,8 +13,10 @@ as $$
     when exists (
       select 1
       from public.vendors v
+      join public.account_verifications av on av.user_id = v.user_id
       where v.user_id = p_seller_id
         and lower(v.status) = 'approved'
+        and av.is_verified = true
     )
     then jsonb_build_object(
       'seller', (
@@ -23,8 +26,10 @@ as $$
           'status', v.status
         )
         from public.vendors v
+        join public.account_verifications av on av.user_id = v.user_id
         where v.user_id = p_seller_id
           and lower(v.status) = 'approved'
+          and av.is_verified = true
         limit 1
       ),
       'products', coalesce((
