@@ -37,7 +37,6 @@ const cachedPublicProducts = unstable_cache(
     const limit = Math.min(1000, Math.max(1, Number(params.get("limit") || 24)));
     const query = (params.get("q") || "").trim();
     const category = params.get("category") || "all";
-    const sort = params.get("sort") || "latest";
     const subCategoryId = Number(params.get("sub_category_id") || 0);
     const mainCategoryId = Number(params.get("main_category_id") || 0);
 
@@ -49,13 +48,9 @@ const cachedPublicProducts = unstable_cache(
       .from("products")
       .select(columns)
       .eq("is_active", true)
-      .eq("status", "Approved");
-
-    if (sort === "popular" && mode === "home") {
-      request = request.order("sold", { ascending: false }).order("created_at", { ascending: false }).order("id", { ascending: false });
-    } else {
-      request = request.order("created_at", { ascending: false }).order("id", { ascending: false });
-    }
+      .eq("status", "Approved")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
 
     if (mode === "search" && query) {
       // Remove PostgREST filter syntax characters from user input.
@@ -100,12 +95,12 @@ const cachedPublicProducts = unstable_cache(
 export async function GET(request: NextRequest) {
   const params = new URLSearchParams();
   const source = request.nextUrl.searchParams;
-  for (const key of ["mode", "q", "category", "main_category_id", "sub_category_id", "offset", "limit", "sort"]) {
+  for (const key of ["mode", "q", "category", "main_category_id", "sub_category_id", "offset", "limit"]) {
     const value = source.get(key);
     if (value !== null) params.set(key, value);
   }
   const mode = params.get("mode") || "home";
-  if (!["home", "clothing", "search"].includes(mode) || !["latest", "popular"].includes(params.get("sort") || "latest")) {
+  if (!["home", "clothing", "search"].includes(mode)) {
     return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
   }
   const offset = Number(params.get("offset") || 0);
