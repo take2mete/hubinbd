@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { addToCart } from "@/lib/cart";
 type Product={id:number;name:string;name_bn:string|null;image_urls:string[]|null;price:number|string;old_price:number|string|null;category:string;stock:number|null;sold:number|string|null;created_at:string;tag?:string|null};
-const sections=[{key:"mens",title:"ছেলেদের জামা",aliases:["ছেলেদের জামা","mens","men","পুরুষ"]},{key:"womens",title:"মেয়েদের জামা",aliases:["মেয়েদের জামা","মেয়েদের জামা","womens","women","ladies"]},{key:"kids",title:"বাচ্চাদের জামা",aliases:["বাচ্চাদের জামা","শিশুদের জামা","kids","children","child"]}];
+const sections=[{key:"mens",title:"ছেলেদের জামা",aliases:["ছেলেদের জামা","mens","men","পুরুষ","পুরুষদের"]},{key:"womens",title:"মেয়েদের জামা",aliases:["মেয়েদের জামা","মেয়েদের জামা","নারী","নারীদের","মহিলা","womens","women","ladies"]},{key:"kids",title:"বাচ্চাদের জামা",aliases:["বাচ্চাদের জামা","শিশুদের জামা","শিশু","কিডস","kids","children","child"]}];
 function matchesCategory(category:string,aliases:string[]){const value=category.trim().toLocaleLowerCase();return aliases.some(alias=>{const normalized=alias.toLocaleLowerCase();if(value===normalized)return true;if(/^[a-z]+$/.test(normalized))return new RegExp("(^|[^a-z])"+normalized+"([^a-z]|$)").test(value);return value.includes(normalized)})}
 function soldCount(value:string|number|null){const normalized=String(value??"0").replace(/[০-৯]/g,d=>String("০১২৩৪৫৬৭৮৯".indexOf(d)));const parsed=Number.parseInt(normalized.replace(/[^0-9]/g,""),10);return Number.isFinite(parsed)?parsed:0}
 function money(value:number|string|null){const amount=Number(value||0);return Number.isFinite(amount)?new Intl.NumberFormat("bn-BD").format(amount):"0"}
