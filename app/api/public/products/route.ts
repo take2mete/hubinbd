@@ -52,24 +52,34 @@ const cachedPublicProducts = unstable_cache(
       .order("created_at", { ascending: false })
       .order("id", { ascending: false });
 
-    if (mode === "search") {
-      if (query) {
-        // Remove PostgREST filter syntax characters from user input.
-        const safeQuery = query.replace(/[(),.%_*]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
-        if (safeQuery) request = request.or("name.ilike.%"+safeQuery+"%,name_bn.ilike.%"+safeQuery+"%");
-      }
-      if (category === "clothing") request = request.ilike("category", "%জামা%");
-      if (subCategoryId > 0 && Number.isSafeInteger(subCategoryId)) {
-        request = request.eq("sub_category_id", subCategoryId);
-      } else if (mainCategoryId > 0 && Number.isSafeInteger(mainCategoryId)) {
-        const { data: subs, error: subError } = await supabase
-          .from("sub_categories").select("id")
-          .eq("main_category_id", mainCategoryId).eq("is_active", true);
-        if (subError) throw subError;
-        const ids = (subs || []).map((item) => item.id);
-        if (!ids.length) return [];
-        request = request.in("sub_category_id", ids);
-      }
+    if (mode === "search" && query) {
+      // Remove PostgREST filter syntax characters from user input.
+      const safeQuery = query.replace(/[(),.%_*]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+      if (safeQuery) request = request.or("name.ilike.%"+safeQuery+"%,name_bn.ilike.%"+safeQuery+"%");
+    }
+
+    // Resolve category filters through the active category records instead of
+    // matching Bengali display text against the product.category field.
+    // Clothing products are attached to Fashion (main category id 1).
+    const shouldFilterClothing = mode === "clothing" || (mode === "search" && category === "clothing");
+    if (subCategoryId > 0 && Number.isSafeInteger(subCategoryId)) {
+      request = request.eq("sub_category_id", subCategoryId);
+    } else if (mainCategoryId > 0 && Number.isSafeInteger(mainCategoryId)) {
+      const { data: subs, error: subError } = await supabase
+        .from("sub_categories").select("id")
+        .eq("main_category_id", mainCategoryId).eq("is_active", true);
+      if (subError) throw subError;
+      const ids = (subs || []).map((item) => item.id);
+      if (!ids.length) return [];
+      request = request.in("sub_category_id", ids);
+    } else if (shouldFilterClothing) {
+      const { data: subs, error: subError } = await supabase
+        .from("sub_categories").select("id")
+        .eq("main_category_id", 1).eq("is_active", true);
+      if (subError) throw subError;
+      const ids = (subs || []).map((item) => item.id);
+      if (!ids.length) return [];
+      request = request.in("sub_category_id", ids);
     }
 
     const { data, error } = await request.range(offset, offset + limit - 1);
