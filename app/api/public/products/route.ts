@@ -71,7 +71,9 @@ const cachedPublicProducts = unstable_cache(
 
     const { data, error } = await request.range(offset, offset + limit - 1);
     if (error) throw error;
-    return (data || []) as PublicProduct[];
+    // Supabase's select() parser cannot infer a literal row type from the
+    // conditional column list above. The selected columns are defined here.
+    return (data || []) as unknown as PublicProduct[];
   },
   ["hubinbd-public-products-v1"],
   { revalidate: 30, tags: ["hubinbd-public-products"] },
