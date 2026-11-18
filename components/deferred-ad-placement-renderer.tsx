@@ -14,7 +14,6 @@ export default function DeferredAdPlacementRenderer() {
   useEffect(() => {
     let cancelled = false;
     let activationId: number | undefined;
-    let fallbackId: number | undefined;
 
     const activateAfterLoad = () => {
       if (activationId !== undefined) window.clearTimeout(activationId);
@@ -30,7 +29,7 @@ export default function DeferredAdPlacementRenderer() {
     }
 
     // Keep ads available even if the load event is delayed by a third-party resource.
-    fallbackId = window.setTimeout(() => {
+    const fallbackId = window.setTimeout(() => {
       if (!cancelled) setReady(true);
     }, 12000);
 
