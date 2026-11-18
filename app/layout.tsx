@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Hind_Siliguri } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import AffiliateReferralTracker from "@/components/affiliate-referral-tracker";
 import DeferredAdPlacementRenderer from "@/components/deferred-ad-placement-renderer";
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AffiliateReferralTracker />
         <DeferredAdPlacementRenderer />
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
