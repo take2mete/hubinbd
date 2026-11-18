@@ -13,25 +13,32 @@ export default function DeferredAdPlacementRenderer() {
 
   useEffect(() => {
     let cancelled = false;
-    let idleId: number | undefined;
-    let timeoutId: number | undefined;
+    let activationId: number | undefined;
+    let fallbackId: number | undefined;
 
-    const activate = () => {
-      if (!cancelled) setReady(true);
+    const activateAfterLoad = () => {
+      if (activationId !== undefined) window.clearTimeout(activationId);
+      activationId = window.setTimeout(() => {
+        if (!cancelled) setReady(true);
+      }, 4000);
     };
 
-    if (typeof window.requestIdleCallback === "function") {
-      idleId = window.requestIdleCallback(activate, { timeout: 2500 });
+    if (document.readyState === "complete") {
+      activateAfterLoad();
     } else {
-      timeoutId = window.setTimeout(activate, 1200);
+      window.addEventListener("load", activateAfterLoad, { once: true });
     }
+
+    // Keep ads available even if the load event is delayed by a third-party resource.
+    fallbackId = window.setTimeout(() => {
+      if (!cancelled) setReady(true);
+    }, 12000);
 
     return () => {
       cancelled = true;
-      if (idleId !== undefined && typeof window.cancelIdleCallback === "function") {
-        window.cancelIdleCallback(idleId);
-      }
-      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      window.removeEventListener("load", activateAfterLoad);
+      if (activationId !== undefined) window.clearTimeout(activationId);
+      if (fallbackId !== undefined) window.clearTimeout(fallbackId);
     };
   }, []);
 
