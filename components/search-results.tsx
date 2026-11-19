@@ -8,7 +8,7 @@ import type { SearchProduct } from "@/lib/search-products";
 
 const PAGE_SIZE = 24;
 
-function SearchResults({ initialProducts, initialSearchKey }: { initialProducts: SearchProduct[]; initialSearchKey: string }) {
+function SearchResults({ initialProducts }: { initialProducts: SearchProduct[] }) {
   const searchParams = useSearchParams();
   const searchKey = searchParams.toString();
   const [items, setItems] = useState<SearchProduct[]>(initialProducts);
@@ -117,7 +117,7 @@ function SearchResults({ initialProducts, initialSearchKey }: { initialProducts:
   );
 }
 
-export default function SearchResultsClient(props: { initialProducts: SearchProduct[]; initialSearchKey: string }) {
+export default function SearchResultsClient(props: { initialProducts: SearchProduct[] }) {
   return <Suspense fallback={<main className="min-h-screen bg-slate-50 p-8" role="status">লোড হচ্ছে…</main>}>
     <SearchResults {...props} />
   </Suspense>;
