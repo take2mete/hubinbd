@@ -27,7 +27,7 @@ export default function SiteFooter() {
       <div className="mx-auto max-w-[1280px] px-5 pb-7 pt-12 sm:px-8 sm:pt-16">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[1.45fr_1fr_1fr_1.15fr] lg:gap-12">
           <div>
-            <Link href="/" aria-label="HubinBD হোমপেজ" className="inline-flex items-center gap-3">
+            <Link href="/" className="inline-flex items-center gap-3">
               <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-2xl font-black text-[#090b10] shadow-lg shadow-white/10">H</span>
               <span className="leading-none"><span className="block text-2xl font-extrabold tracking-tight">HubinBD</span><span className="mt-1.5 block text-[10px] font-semibold tracking-[.25em] text-zinc-300">ALL IN ONE HUB</span></span>
             </Link>
