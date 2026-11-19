@@ -15,7 +15,7 @@ const getCachedSearchProducts = unstable_cache(
     const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!configuredUrl || !key) throw new Error("Supabase public environment is not configured");
-    const url = configuredUrl.trim().replace(/\\/rest\\/v1\\/?$/i, "").replace(/\\/+$/, "");
+    const url = configuredUrl.trim().replace(/\/rest\/v1\/?$/i, "").replace(/\/+$/, "");
     const supabase = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
@@ -29,16 +29,22 @@ const getCachedSearchProducts = unstable_cache(
       .order("id", { ascending: false });
 
     if (query) {
-      const safeQuery = query.replace(/[(),.%_*]/g, " ").replace(/\\s+/g, " ").trim().slice(0, 80);
+      const safeQuery = query.replace(/[(),.%_*]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
       if (safeQuery) request = request.or("name.ilike.%"+safeQuery+"%,name_bn.ilike.%"+safeQuery+"%");
     }
 
     if (subCategoryId > 0) {
       request = request.eq("sub_category_id", subCategoryId);
     } else if (mainCategoryId > 0) {
-      const { data: subs, error } = await supabase
-        .from("sub_categories").select("id")
+      const { data: subs, error } = await supabase.from("sub_categories").select("id")
         .eq("main_category_id", mainCategoryId).eq("is_active", true);
+      if (error) throw error;
+      const ids = (subs || []).map((item) => item.id);
+      if (!ids.length) return [];
+      request = request.in("sub_category_id", ids);
+    } else if (category === "clothing") {
+      const { data: subs, error } = await supabase.from("sub_categories").select("id")
+        .eq("main_category_id", 1).eq("is_active", true);
       if (error) throw error;
       const ids = (subs || []).map((item) => item.id);
       if (!ids.length) return [];
@@ -53,6 +59,6 @@ const getCachedSearchProducts = unstable_cache(
   { revalidate: 30, tags: ["hubinbd-public-products"] },
 );
 
-export function getSearchProducts(query: string, mainCategoryId: number, subCategoryId: number) {
-  return getCachedSearchProducts(query, mainCategoryId, subCategoryId);
+export function getSearchProducts(query: string, category: string, mainCategoryId: number, subCategoryId: number) {
+  return getCachedSearchProducts(query, category, mainCategoryId, subCategoryId);
 }
