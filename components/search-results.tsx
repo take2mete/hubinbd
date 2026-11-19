@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -16,11 +16,11 @@ function SearchResults({ initialProducts, initialSearchKey }: { initialProducts:
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(initialProducts.length === PAGE_SIZE);
   const [error, setError] = useState("");
-  const [firstSearchKey, setFirstSearchKey] = useState(initialSearchKey);
+  const firstRender = useRef(true);
 
   useEffect(() => {
-    if (searchKey === firstSearchKey) {
-      setFirstSearchKey("");
+    if (firstRender.current) {
+      firstRender.current = false;
       return;
     }
     let active = true;
@@ -53,7 +53,7 @@ function SearchResults({ initialProducts, initialSearchKey }: { initialProducts:
     }
     void run();
     return () => { active = false; };
-  }, [searchKey, firstSearchKey]);
+  }, [searchKey]);
 
   async function loadMore() {
     if (loadingMore || !hasMore) return;
@@ -94,7 +94,7 @@ function SearchResults({ initialProducts, initialSearchKey }: { initialProducts:
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {items.map((product, index) => (
                 <article key={product.id} className="overflow-hidden rounded-xl border bg-white p-3">
-                  <Link href={"/checkout?product=" + product.id} aria-label={(product.name_bn || product.name) + " কিনুন"}>
+                  <Link href={"/product/" + product.id} aria-label={(product.name_bn || product.name) + " কিনুন"}>
                     {product.image_urls?.[0] ? <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-slate-50">
                       <Image src={product.image_urls[0]} alt={product.name_bn || product.name} fill
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
