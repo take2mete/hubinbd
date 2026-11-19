@@ -42,7 +42,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
 
   return <>
     <SiteHeader />
-    <SearchResultsClient initialProducts={initialProducts} initialSearchKey={initialSearchKey} />
+    <SearchResultsClient initialProducts={initialProducts} />
     <SiteFooter />
   </>;
 }
