@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import SearchResultsClient from "@/components/search-results";
-import { getSearchProducts } from "@/lib/search-products";
+import { getSearchProducts, type SearchProduct } from "@/lib/search-products";
 
 type SearchParams = Promise<{ q?: string; category?: string; main_category_id?: string; sub_category_id?: string }>;
 
@@ -30,7 +30,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const subCategoryId = Math.max(0, Number(params.sub_category_id || 0));
   const safeMainId = Number.isSafeInteger(mainCategoryId) ? mainCategoryId : 0;
   const safeSubId = Number.isSafeInteger(subCategoryId) ? subCategoryId : 0;
-  let initialProducts = [];
+  let initialProducts: SearchProduct[] = [];
   try {
     initialProducts = await getSearchProducts(query, category, safeMainId, safeSubId);
   } catch {
