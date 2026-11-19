@@ -15,7 +15,7 @@ export default async function HomePage() {
           বাংলাদেশের অনলাইন শপিং ও ডিজিটাল সার্ভিস প্ল্যাটফর্ম
         </h1>
         <section className="pb-12 pt-0">
-          <MarketplaceProducts mode="home" initialProducts={initialProducts} />
+          <MarketplaceProducts mode="home" initialProducts={initialProducts.length ? initialProducts : undefined} />
         </section>
       </div>
     </main>
