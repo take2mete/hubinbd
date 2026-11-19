@@ -21,7 +21,7 @@ export const getHomeProducts = unstable_cache(
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!configuredUrl || !key) return [];
 
-    const url = configuredUrl.trim().replace(/\\/rest\\/v1\\/?$/i, "").replace(/\\/+$/, "");
+    const url = configuredUrl.trim().replace(/\/rest\/v1\/?$/i, "").replace(/\/+$/, "");
     const supabase = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
