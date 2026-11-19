@@ -52,7 +52,7 @@ export default function SiteFooter() {
               <a href="mailto:support@hubinbd.com" className="group flex items-center gap-3 text-sm text-zinc-300 transition hover:text-white"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/[.08] text-base transition group-hover:bg-orange-500">✉</span><span><span className="block text-[11px] text-zinc-300">ইমেইল</span><span className="mt-0.5 block">support@hubinbd.com</span></span></a>
               <div className="flex items-center gap-3 text-sm text-zinc-300"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/[.08] text-base">⌖</span><span><span className="block text-[11px] text-zinc-300">অবস্থান</span><span className="mt-0.5 block">ঢাকা, বাংলাদেশ</span></span></div>
             </div>
-            <a href="https://cars.hubinbd.com/" target="_blank" rel="noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#ff6b00] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-orange-600">রেন্ট-এ-কার বুক করুন <span aria-hidden="true">↗</span></a>
+            <a href="https://cars.hubinbd.com/" target="_blank" rel="noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#b94700] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#963900]">রেন্ট-এ-কার বুক করুন <span aria-hidden="true">↗</span></a>
           </div>
         </div>
 
