@@ -5,13 +5,13 @@ export type SearchProduct = {
   id: number;
   name: string;
   name_bn: string | null;
-  price: number;
+  price: number | string;
   image_urls: string[] | null;
   category: string;
 };
 
 const getCachedSearchProducts = unstable_cache(
-  async (query: string, mainCategoryId: number, subCategoryId: number): Promise<SearchProduct[]> => {
+  async (query: string, category: string, mainCategoryId: number, subCategoryId: number): Promise<SearchProduct[]> => {
     const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!configuredUrl || !key) throw new Error("Supabase public environment is not configured");
