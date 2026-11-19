@@ -24,14 +24,14 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
 
 export default async function SearchPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const query = (params.q || "").trim().slice(0, 80);
+  const query = (params.q || "").trim().slice(0, 80);\n  const category = (params.category || "all").slice(0, 40);
   const mainCategoryId = Math.max(0, Number(params.main_category_id || 0));
   const subCategoryId = Math.max(0, Number(params.sub_category_id || 0));
   const safeMainId = Number.isSafeInteger(mainCategoryId) ? mainCategoryId : 0;
   const safeSubId = Number.isSafeInteger(subCategoryId) ? subCategoryId : 0;
   let initialProducts = [];
   try {
-    initialProducts = await getSearchProducts(query, safeMainId, safeSubId);
+    initialProducts = await getSearchProducts(query, category, safeMainId, safeSubId);
   } catch {
     initialProducts = [];
   }
