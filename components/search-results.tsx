@@ -26,13 +26,11 @@ function SearchResults({ initialProducts }: { initialProducts: SearchProduct[] }
       firstRender.current = false;
       return;
     }
-
     const version = ++requestVersion.current;
     loadMoreController.current?.abort();
     loadMoreController.current = null;
     loadingMoreRef.current = false;
     setLoadingMore(false);
-
     const controller = new AbortController();
     let active = true;
 
@@ -64,7 +62,6 @@ function SearchResults({ initialProducts }: { initialProducts: SearchProduct[] }
         if (active && requestVersion.current === version) setLoading(false);
       }
     }
-
     void run();
     return () => {
       active = false;
@@ -78,25 +75,21 @@ function SearchResults({ initialProducts }: { initialProducts: SearchProduct[] }
     loadingMoreRef.current = true;
     setLoadingMore(true);
     setError("");
-
     const version = requestVersion.current;
     const controller = new AbortController();
     loadMoreController.current?.abort();
     loadMoreController.current = controller;
-
     const filters = new URLSearchParams(searchKey);
     const params = new URLSearchParams({ mode: "search", limit: String(PAGE_SIZE), offset: String(items.length) });
     for (const key of ["q", "category", "main_category_id", "sub_category_id"]) {
       const value = filters.get(key);
       if (value) params.set(key, value);
     }
-
     try {
       const response = await fetch("/api/public/products?" + params.toString(), { signal: controller.signal });
       if (!response.ok) throw new Error("Search request failed");
       const result = (await response.json()) as { data: SearchProduct[] };
       if (requestVersion.current !== version || controller.signal.aborted) return;
-
       const data = result.data || [];
       setItems((current) => {
         const known = new Set(current.map((product) => product.id));
@@ -130,18 +123,18 @@ function SearchResults({ initialProducts }: { initialProducts: SearchProduct[] }
         {loading ? <p className="rounded-xl bg-white p-6" role="status">খোঁজা হচ্ছে…</p> :
           error && items.length === 0 ? <p role="alert" className="rounded-xl bg-amber-50 p-6 text-amber-900">{error}</p> :
           items.length ? <>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
               {items.map((product, index) => (
-                <article key={product.id} className="overflow-hidden rounded-xl border bg-white p-3">
+                <article key={product.id} className="min-w-0 overflow-hidden rounded-xl border bg-white p-2 sm:p-3">
                   <Link href={"/product/" + product.id} aria-label={(product.name_bn || product.name) + " কিনুন"}>
                     {product.image_urls?.[0] ? <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-slate-50">
                       <Image src={product.image_urls[0]} alt={product.name_bn || product.name} fill
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                        sizes="(max-width: 640px) 33vw, (max-width: 1024px) 33vw, 16vw"
                         quality={75} priority={index < 2} loading={index < 2 ? "eager" : "lazy"}
                         fetchPriority={index < 2 ? "high" : undefined} className="object-cover" />
                     </div> : <div className="grid aspect-square place-items-center bg-slate-100 text-3xl" aria-hidden="true">🛍️</div>}
-                    <h2 className="mt-2 line-clamp-2 text-sm font-bold">{product.name_bn || product.name}</h2>
-                    <p className="mt-1 font-black text-orange-800">৳{Number(product.price).toLocaleString("bn-BD")}</p>
+                    <h2 className="mt-2 line-clamp-2 text-xs font-bold sm:text-sm">{product.name_bn || product.name}</h2>
+                    <p className="mt-1 text-sm font-black text-orange-800 sm:text-base">৳{Number(product.price).toLocaleString("bn-BD")}</p>
                   </Link>
                 </article>
               ))}
