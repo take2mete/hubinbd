@@ -1,2 +1,2 @@
-import { LoginPage } from "@/components/auth/auth-pages";
-export default function Page() { return <LoginPage admin />; }
+import { redirect } from "next/navigation";
+export default function Page() { redirect("/login"); }

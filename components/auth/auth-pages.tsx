@@ -33,8 +33,7 @@ async function roleFor(userId: string): Promise<Role> {
   const role = roleRow?.role as Role | undefined;
   if (role === "owner_admin" || role === "sub_admin" || role === "admin") return role;
   if (vendor?.status === "approved") return "vendor";
-  if (role === "vendor") return "vendor";
-  return role || (vendor ? "customer" : null);
+  return role === "vendor" || vendor ? "customer" : role || null;
 }
 async function destinationFor(userId: string) {
   const role = await roleFor(userId);
@@ -114,11 +113,11 @@ export function SellerRegisterPage(){
     <label className="block text-sm font-medium">উপজেলা<input required value={upazila} onChange={e=>setUpazila(e.target.value)} className={inputClass+" mt-1.5"}/></label>
     {error&&<p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}{notice&&<p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">{notice}</p>}
     <button disabled={busy} className={buttonClass}>{busy?"অ্যাকাউন্ট তৈরি হচ্ছে...":"Seller Account তৈরি করুন"}</button>
-  </form><p className="mt-5 text-center text-sm text-slate-600">আগে থেকেই অ্যাকাউন্ট আছে? <Link href="/seller/login" className="font-semibold text-blue-700">Seller Login</Link></p></Shell>;
+  </form><p className="mt-5 text-center text-sm text-slate-600">আগে থেকেই অ্যাকাউন্ট আছে? <Link href="/login" className="font-semibold text-blue-700">Seller Login</Link></p></Shell>;
 }
 export function SellerDashboardPage(){
   const router=useRouter();const [loading,setLoading]=useState(true);const [vendor,setVendor]=useState<Vendor|null>(null);const [error,setError]=useState("");const [notice,setNotice]=useState("");const [name,setName]=useState("");const [description,setDescription]=useState("");const [price,setPrice]=useState("");const [category,setCategory]=useState("অন্যান্য");const [image,setImage]=useState("");const [stock,setStock]=useState("1");const [busy,setBusy]=useState(false);
-  useEffect(()=>{let active=true;(async()=>{try{const {data:{user}}=await supabase.auth.getUser();if(!user){router.replace("/seller/login");return;}const {data:row,error:rowError}=await supabase.from("vendors").select("*").eq("user_id",user.id).maybeSingle();if(rowError)throw rowError;if(active)setVendor(row as Vendor|null);}catch(e){if(active)setError(message(e));}finally{if(active)setLoading(false);}})();return()=>{active=false;};},[router]);
+  useEffect(()=>{let active=true;(async()=>{try{const {data:{user}}=await supabase.auth.getUser();if(!user){router.replace("/login");return;}const {data:row,error:rowError}=await supabase.from("vendors").select("*").eq("user_id",user.id).maybeSingle();if(rowError)throw rowError;if(active)setVendor(row as Vendor|null);}catch(e){if(active)setError(message(e));}finally{if(active)setLoading(false);}})();return()=>{active=false;};},[router]);
   async function addProduct(event:FormEvent<HTMLFormElement>){event.preventDefault();setBusy(true);setError("");setNotice("");try{const {data:{user}}=await supabase.auth.getUser();if(!user)throw new Error("আবার লগইন করুন।");const {error:insertError}=await supabase.from("products").insert({vendor_id:user.id,name:name.trim(),name_bn:name.trim(),description:description.trim(),price:Number(price),old_price:Number(price),stock:Number(stock),category,image_urls:image.trim()?[image.trim()]:[],is_active:true});if(insertError)throw insertError;setNotice("পণ্য যোগ হয়েছে।");setName("");setDescription("");setPrice("");setImage("");setStock("1");}catch(e){setError(message(e));}finally{setBusy(false);}}
   async function logout(){await supabase.auth.signOut();router.replace("/seller/login");}
   if(loading)return <main className="p-10 text-center text-slate-700">Dashboard লোড হচ্ছে...</main>;
@@ -136,7 +135,7 @@ export function SellerDashboardPage(){
 }
 export function AdminVendorsPage(){
   const router=useRouter();const [rows,setRows]=useState<Vendor[]>([]);const [loading,setLoading]=useState(true);const [error,setError]=useState("");const [busyId,setBusyId]=useState<string|null>(null);
-  async function load(){setError("");try{const {data:{user}}=await supabase.auth.getUser();if(!user){router.replace("/admin/login");return;}const role=await roleFor(user.id);if(role!=="owner_admin"&&role!=="sub_admin"&&role!=="admin"){router.replace("/");return;}const {data,error:queryError}=await supabase.from("vendors").select("*").eq("status","pending").order("submitted_at",{ascending:true});if(queryError)throw queryError;setRows((data||[]) as Vendor[]);}catch(e){setError(message(e));}finally{setLoading(false);}}
+  async function load(){setError("");try{const {data:{user}}=await supabase.auth.getUser();if(!user){router.replace("/login");return;}const role=await roleFor(user.id);if(role!=="owner_admin"&&role!=="sub_admin"&&role!=="admin"){router.replace("/");return;}const {data,error:queryError}=await supabase.from("vendors").select("*").eq("status","pending").order("submitted_at",{ascending:true});if(queryError)throw queryError;setRows((data||[]) as Vendor[]);}catch(e){setError(message(e));}finally{setLoading(false);}}
   useEffect(()=>{void load();},[]);
   async function review(row:Vendor,status:"approved"|"rejected"){setBusyId(row.user_id);setError("");try{const {data:{user}}=await supabase.auth.getUser();if(!user)throw new Error("লগইন সেশন শেষ হয়েছে।");const {error:updateError}=await supabase.from("vendors").update({status,reviewed_at:new Date().toISOString(),reviewed_by:user.id}).eq("user_id",row.user_id);if(updateError)throw updateError;setRows(current=>current.filter(item=>item.user_id!==row.user_id));}catch(e){setError(message(e));}finally{setBusyId(null);}}
   async function logout(){await supabase.auth.signOut();router.replace("/admin/login");}
