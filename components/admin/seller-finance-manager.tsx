@@ -85,7 +85,9 @@ export default function SellerFinanceManager() {
     setBusy(false);
   }
 
-  async function updateRule(id: string, patch: Row) {
+  type RulePatch = Partial<Pick<Row, "rule_name" | "category_id" | "commission_rate" | "is_active">>;
+
+  async function updateRule(id: string, patch: RulePatch) {
     setBusy(true); setError("");
     const { error: updateError } = await supabase.from("seller_commission_rules").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", id);
     if (updateError) setError(updateError.message); else await load();
