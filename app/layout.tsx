@@ -18,9 +18,9 @@ export const metadata: Metadata = {
   description: "HubinBD-তে পোশাক, অনলাইন টুলস এবং কম্পিউটার ওয়ার্ক সার্ভিস খুঁজুন।",
   applicationName: "HubinBD",
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    shortcut: ["/icon.svg"],
-    apple: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    icon: [{ url: "/icon.png", type: "image/png", sizes: "128x128" }],
+    shortcut: ["/icon.png"],
+    apple: [{ url: "/icon.png", type: "image/png", sizes: "128x128" }],
   },
   keywords: ["HubinBD", "Bangladesh online shopping", "অনলাইন শপিং", "PDF Tools", "Computer Work"],
   alternates: { canonical: "/" },
