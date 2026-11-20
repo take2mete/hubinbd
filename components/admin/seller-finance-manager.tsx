@@ -4,7 +4,25 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 
-type Row = Record<string, any>;
+type Row = {
+  id: string;
+  status: string;
+  sale_amount?: number | string;
+  commission_amount?: number | string;
+  seller_amount?: number | string;
+  commission_rate?: number | string;
+  order_no?: string | null;
+  order_id?: string;
+  product_name?: string;
+  seller_id?: string;
+  rule_name?: string;
+  category_id?: number | null;
+  is_active?: boolean;
+  name?: string;
+  method?: string;
+  amount?: number | string;
+  account_number?: string;
+};
 type Tab = "commissions" | "rules" | "payouts";
 const panel = "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm";
 const input = "w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm";
@@ -20,7 +38,7 @@ export default function SellerFinanceManager() {
   const [categories, setCategories] = useState<Row[]>([]);
   const [ruleName, setRuleName] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [rate, setRate] = useState("0");
+  const [rate, setRate] = useState("10");
 
   const load = useCallback(async () => {
     setError("");
@@ -62,7 +80,7 @@ export default function SellerFinanceManager() {
       rule_name: ruleName.trim(), category_id: categoryId ? Number(categoryId) : null, commission_rate: parsed, is_active: true
     });
     if (insertError) setError(insertError.message);
-    else { setRuleName(""); setCategoryId(""); setRate("0"); await load(); }
+    else { setRuleName(""); setCategoryId(""); setRate("10"); await load(); }
     setBusy(false);
   }
 
@@ -137,7 +155,7 @@ export default function SellerFinanceManager() {
           <h2 className="mb-3 font-bold">Commission Rules · {rules.length}</h2>
           <div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left text-sm"><thead><tr className="bg-slate-50"><th className="p-3">নিয়ম</th><th className="p-3">ক্যাটাগরি</th><th className="p-3">হার</th><th className="p-3">অবস্থা</th><th className="p-3">Action</th></tr></thead><tbody>
             {rules.map(x=><tr key={x.id} className="border-t"><td className="p-3 font-semibold">{x.rule_name}</td><td className="p-3">{categories.find(c=>c.id===x.category_id)?.name || (x.category_id ? "Unknown category" : "সব ক্যাটাগরি (Default)")}</td><td className="p-3"><input aria-label="Commission rate" type="number" min="0" max="100" step="0.01" defaultValue={x.commission_rate} onBlur={e=>{if(Number(e.target.value)!==Number(x.commission_rate))void updateRule(x.id,{commission_rate:Number(e.target.value)})}} className="w-24 rounded-lg border p-2" /> %</td><td className="p-3">{x.is_active ? "Active" : "Inactive"}</td><td className="p-3"><button disabled={busy} onClick={()=>void updateRule(x.id,{is_active:!x.is_active})} className="rounded-lg border px-3 py-2 text-xs">{x.is_active ? "বন্ধ করুন" : "চালু করুন"}</button></td></tr>)}
-            {!rules.length && <tr><td colSpan={5} className="p-6 text-center text-slate-500">কোনো কমিশন নিয়ম নেই। কমিশন হার নির্ধারণ না করা পর্যন্ত হার ০% থাকবে।</td></tr>}
+            {!rules.length && <tr><td colSpan={5} className="p-6 text-center text-slate-500">কোনো কমিশন নিয়ম নেই। Default কমিশন হার ১০% দিয়ে একটি নিয়ম যোগ করুন।</td></tr>}
           </tbody></table></div>
         </section>
       </div>}
