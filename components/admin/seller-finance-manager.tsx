@@ -23,6 +23,7 @@ type Row = {
   amount?: number | string;
   account_number?: string;
 };
+type Category = { id: number; name: string };
 type Tab = "commissions" | "rules" | "payouts";
 const panel = "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm";
 const input = "w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm";
@@ -35,7 +36,7 @@ export default function SellerFinanceManager() {
   const [commissions, setCommissions] = useState<Row[]>([]);
   const [rules, setRules] = useState<Row[]>([]);
   const [payouts, setPayouts] = useState<Row[]>([]);
-  const [categories, setCategories] = useState<Row[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [ruleName, setRuleName] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [rate, setRate] = useState("10");
