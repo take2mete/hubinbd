@@ -17,12 +17,23 @@ function SearchResults({ initialProducts }: { initialProducts: SearchProduct[] }
   const [hasMore, setHasMore] = useState(initialProducts.length === PAGE_SIZE);
   const [error, setError] = useState("");
   const firstRender = useRef(true);
+  const requestVersion = useRef(0);
+  const loadingMoreRef = useRef(false);
+  const loadMoreController = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
       return;
     }
+
+    const version = ++requestVersion.current;
+    loadMoreController.current?.abort();
+    loadMoreController.current = null;
+    loadingMoreRef.current = false;
+    setLoadingMore(false);
+
+    const controller = new AbortController();
     let active = true;
 
     async function run() {
@@ -37,48 +48,76 @@ function SearchResults({ initialProducts }: { initialProducts: SearchProduct[] }
         if (value) params.set(key, value);
       }
       try {
-        const response = await fetch("/api/public/products?" + params.toString());
+        const response = await fetch("/api/public/products?" + params.toString(), { signal: controller.signal });
         if (!response.ok) throw new Error("Search request failed");
         const result = (await response.json()) as { data: SearchProduct[] };
-        if (active) {
+        if (active && requestVersion.current === version) {
           const data = result.data || [];
           setItems(data);
           setHasMore(data.length === PAGE_SIZE);
         }
       } catch {
-        if (active) setError("সার্চ ফলাফল আনা যায়নি। আবার চেষ্টা করুন।");
+        if (active && !controller.signal.aborted && requestVersion.current === version) {
+          setError("সার্চ ফলাফল আনা যায়নি। আবার চেষ্টা করুন।");
+        }
       } finally {
-        if (active) setLoading(false);
+        if (active && requestVersion.current === version) setLoading(false);
       }
     }
+
     void run();
-    return () => { active = false; };
+    return () => {
+      active = false;
+      controller.abort();
+      loadMoreController.current?.abort();
+    };
   }, [searchKey]);
 
   async function loadMore() {
-    if (loadingMore || !hasMore) return;
+    if (loadingMoreRef.current || !hasMore) return;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
     setError("");
+
+    const version = requestVersion.current;
+    const controller = new AbortController();
+    loadMoreController.current?.abort();
+    loadMoreController.current = controller;
+
     const filters = new URLSearchParams(searchKey);
     const params = new URLSearchParams({ mode: "search", limit: String(PAGE_SIZE), offset: String(items.length) });
     for (const key of ["q", "category", "main_category_id", "sub_category_id"]) {
       const value = filters.get(key);
       if (value) params.set(key, value);
     }
+
     try {
-      const response = await fetch("/api/public/products?" + params.toString());
+      const response = await fetch("/api/public/products?" + params.toString(), { signal: controller.signal });
       if (!response.ok) throw new Error("Search request failed");
       const result = (await response.json()) as { data: SearchProduct[] };
+      if (requestVersion.current !== version || controller.signal.aborted) return;
+
       const data = result.data || [];
       setItems((current) => {
         const known = new Set(current.map((product) => product.id));
-        return [...current, ...data.filter((product) => !known.has(product.id))];
+        const unique = data.filter((product) => {
+          if (known.has(product.id)) return false;
+          known.add(product.id);
+          return true;
+        });
+        return [...current, ...unique];
       });
       setHasMore(data.length === PAGE_SIZE);
     } catch {
-      setError("আরও পণ্য আনা যায়নি। আবার চেষ্টা করুন।");
+      if (!controller.signal.aborted && requestVersion.current === version) {
+        setError("আরও পণ্য আনা যায়নি। আবার চেষ্টা করুন।");
+      }
     } finally {
-      setLoadingMore(false);
+      if (requestVersion.current === version) {
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+        if (loadMoreController.current === controller) loadMoreController.current = null;
+      }
     }
   }
 
