@@ -2,6 +2,18 @@
 -- Adds aggregate-only reporting RPCs and enforces Sub-admin read-only access.
 -- No existing rows are changed or deleted.
 
+CREATE OR REPLACE FUNCTION public.is_current_user_owner_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public, pg_temp
+AS $function$
+  SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = (SELECT auth.uid()) AND role = 'owner_admin');
+$function$;
+REVOKE ALL ON FUNCTION public.is_current_user_owner_admin() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_current_user_owner_admin() TO authenticated;
+
 CREATE OR REPLACE FUNCTION public.is_current_user_sub_admin()
 RETURNS boolean
 LANGUAGE sql
@@ -70,6 +82,35 @@ BEGIN
 END;
 $block$;
 
+-- Financial and security data are Owner Admin only. Self-service payout reads remain intact.
+DROP POLICY IF EXISTS owner_only_audit_log_read ON public.admin_audit_logs;
+CREATE POLICY owner_only_audit_log_read ON public.admin_audit_logs AS RESTRICTIVE FOR SELECT TO authenticated
+USING ((SELECT public.is_current_user_owner_admin()));
+
+DROP POLICY IF EXISTS owner_only_seller_commission_read ON public.seller_commissions;
+CREATE POLICY owner_only_seller_commission_read ON public.seller_commissions AS RESTRICTIVE FOR SELECT TO authenticated
+USING ((SELECT public.is_current_user_owner_admin()));
+
+DROP POLICY IF EXISTS owner_only_seller_commission_rules_read ON public.seller_commission_rules;
+CREATE POLICY owner_only_seller_commission_rules_read ON public.seller_commission_rules AS RESTRICTIVE FOR SELECT TO authenticated
+USING ((SELECT public.is_current_user_owner_admin()));
+
+DROP POLICY IF EXISTS owner_only_payout_read ON public.payouts;
+CREATE POLICY owner_only_payout_read ON public.payouts AS RESTRICTIVE FOR SELECT TO authenticated
+USING ((SELECT public.is_current_user_owner_admin()) OR seller_id = (SELECT auth.uid()));
+
+DROP POLICY IF EXISTS owner_or_affiliate_commission_read ON public.affiliate_commissions;
+CREATE POLICY owner_or_affiliate_commission_read ON public.affiliate_commissions AS RESTRICTIVE FOR SELECT TO authenticated
+USING ((SELECT public.is_current_user_owner_admin()) OR EXISTS (
+ SELECT 1 FROM public.affiliate_profiles ap WHERE ap.id = affiliate_commissions.affiliate_id AND ap.user_id = (SELECT auth.uid())
+));
+
+DROP POLICY IF EXISTS owner_or_affiliate_payout_read ON public.affiliate_payout_requests;
+CREATE POLICY owner_or_affiliate_payout_read ON public.affiliate_payout_requests AS RESTRICTIVE FOR SELECT TO authenticated
+USING ((SELECT public.is_current_user_owner_admin()) OR EXISTS (
+ SELECT 1 FROM public.affiliate_profiles ap WHERE ap.id = affiliate_payout_requests.affiliate_id AND ap.user_id = (SELECT auth.uid())
+));
+
 -- Apply the same no-write rule to Supabase Storage objects.
 DROP POLICY IF EXISTS sub_admin_read_only_storage_insert ON storage.objects;
 CREATE POLICY sub_admin_read_only_storage_insert ON storage.objects
@@ -120,7 +161,7 @@ BEGIN
     'daily_sales', COALESCE((
       SELECT sum(o.amount) FROM public.orders o
       WHERE o.created_at >= v_today_start
-        AND lower(coalesce(o.status, '')) NOT IN ('cancelled', 'canceled', 'rejected', 'refunded')
+        AND lower(coalesce(o.status, '')) IN ('delivered', 'completed')
     ), 0),
     'monthly_sales', COALESCE((
       SELECT sum(o.amount) FROM public.orders o
