@@ -16,6 +16,7 @@ const businessItems: MenuItem[] = [
 const ownerItems: MenuItem[] = [
   ["External Monitoring", "Storage, Database, Backup ও Vercel", "/admin/monitoring", "🩺"],
   ["Security Center", "Admin কার্যক্রম ও Audit Logs", "/admin/security", "🔐"],
+  ["Expense Ledger", "ব্যবসার খরচ যোগ ও হিসাব", "/admin/expenses", "🧮"],
 ];
 
 const existingGroups: { name: string; items: MenuItem[] }[] = [
