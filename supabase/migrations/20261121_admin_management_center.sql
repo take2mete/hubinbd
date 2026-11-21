@@ -166,7 +166,7 @@ BEGIN
     'monthly_sales', COALESCE((
       SELECT sum(o.amount) FROM public.orders o
       WHERE o.created_at >= v_month_start
-        AND lower(coalesce(o.status, '')) NOT IN ('cancelled', 'canceled', 'rejected', 'refunded')
+        AND lower(coalesce(o.status, '')) IN ('delivered', 'completed')
     ), 0),
     'total_orders', (SELECT count(*) FROM public.orders),
     'pending_orders', (SELECT count(*) FROM public.orders o WHERE lower(coalesce(o.status, '')) = 'pending'),
@@ -235,7 +235,7 @@ BEGIN
   LEFT JOIN public.vendors v ON v.user_id = o.seller_id
   LEFT JOIN public.products p ON p.id = o.product_id
   WHERE (o.created_at AT TIME ZONE 'Asia/Dhaka')::date BETWEEN p_from AND p_to
-    AND lower(coalesce(o.status, '')) NOT IN ('cancelled', 'canceled', 'rejected', 'refunded')
+    AND lower(coalesce(o.status, '')) IN ('delivered', 'completed')
   GROUP BY 1, 2, 3
   ORDER BY 1 DESC, 5 DESC;
 END;
