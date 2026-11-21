@@ -1,0 +1,1 @@
+create index if not exists admin_expenses_created_by_idx on public.admin_expenses (created_by);
