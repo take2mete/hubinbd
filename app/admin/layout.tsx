@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 type GateState = "checking" | "allowed" | "denied";
 const subAdminRoutes = ["/admin", "/admin/business", "/admin/sales-reports", "/admin/analytics"];
-const ownerOnlyRoutes = ["/admin/monitoring", "/admin/security", "/admin/audit-logs", "/admin/users", "/admin/finance", "/admin/affiliates"];
+const ownerOnlyRoutes = ["/admin/monitoring", "/admin/security", "/admin/audit-logs", "/admin/users", "/admin/finance", "/admin/affiliates", "/admin/expenses"];
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
  const pathname = usePathname();
  const [state,setState] = useState<GateState>("checking");
