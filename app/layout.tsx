@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Hind_Siliguri } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import AffiliateReferralTracker from "@/components/affiliate-referral-tracker";
 import DeferredAdPlacementRenderer from "@/components/deferred-ad-placement-renderer";
+
+const GA_MEASUREMENT_ID = "G-RH11P4G8KT";
 
 const hindSiliguri = Hind_Siliguri({
   subsets: ["latin", "bengali"],
@@ -39,6 +42,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="bn" className={hindSiliguri.variable}>
       <body>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){window.dataLayer.push(arguments);}
+            window.gtag = gtag;
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          `}
+        </Script>
         <AffiliateReferralTracker />
         <DeferredAdPlacementRenderer />
         {children}
