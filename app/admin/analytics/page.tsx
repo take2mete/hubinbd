@@ -12,7 +12,7 @@ export default function Page() {
         <h2 className="text-lg font-bold">Google Analytics 4</h2>
         <p className="mt-2 text-sm text-slate-600">আজ, গত ৭ দিন ও ৩০ দিনের Visitor, Page Views, Device, Country/City, Traffic Source এবং Popular Pages দেখতে GA4 ব্যবহার করুন। District-level অবস্থান IP-ভিত্তিক আনুমানিক হতে পারে।</p>
         <a href="https://analytics.google.com/" target="_blank" rel="noreferrer" className="mt-4 inline-flex rounded-xl bg-[#172b4d] px-5 py-3 text-sm font-bold text-white">Google Analytics খুলুন ↗</a>
-        <p className="mt-3 text-xs text-slate-500">GA4 Property ও Measurement ID যুক্ত না করা পর্যন্ত বাস্তব Visitor রিপোর্ট পাওয়া যাবে না। Public website-এ নতুন tracking script যোগ করা হয়নি, যাতে সাইট অপ্রয়োজনীয় ভারী না হয়।</p>
+        <p className="mt-3 text-xs text-slate-500">Measurement ID G-RH11P4G8KT tracking code এই release-এর সঙ্গে যুক্ত করা হয়েছে। Merge ও production deployment-এর পর GA4 Realtime রিপোর্টে প্রথম ভিজিট যাচাই করুন।</p>
       </section>
     </div>
   </main>;
